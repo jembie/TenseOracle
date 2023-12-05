@@ -1,0 +1,12 @@
+{
+  "SEED_SIZE": 8,
+  "ITERATIONS": 3,
+  "QUERY_BATCH_SIZE": 8,
+  "TRAIN_BATCH_SIZE": 8,
+  "SET_EVAL_ITERATIONS": 2,
+  "NUM_EPOCHS": 1,
+  "LR": 2e-5,
+  "MODEL_NAME": "distilroberta-base",
+  "CACHE_ADR": "./cache",
+  "SHARED_CACHE_ADR": "./cache"
+}

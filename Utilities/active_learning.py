@@ -3,6 +3,7 @@ from small_text import TransformerBasedClassificationFactory, TransformerModelAr
 from Strategies import acquisition_functions, filters
 from small_text import QueryStrategy, PoolBasedActiveLearner, random_initialization_balanced
 import numpy as np
+import gc
 
 
 def load_model(config: dict, num_classes):
@@ -115,3 +116,29 @@ def initialize_active_learner(active_learner, y_train, config):
     active_learner.initialize_data(indices_initial, y_initial.astype(np.int64))
 
     return indices_initial
+
+
+def perform_active_learning(active_learner: PoolBasedActiveLearner,
+                            config,
+                            indices_labeled,
+                            train,
+                            ):
+    for i in range(config["ITERATIONS"]):
+        # Clear Memory
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        indices_queried = active_learner.query(num_samples=config["QUERY_BATCH_SIZE"])
+
+        # Simulate Oracle
+        y = train.y[indices_queried]
+
+        # Pass labels to active learner and retrain model
+        active_learner.update(y)
+
+        indices_labeled = np.concatenate([indices_labeled, indices_queried])
+
+        # When evaluating we ignore Pseudo-labeled data because we don't know whether it is true
+        print('Iteration #{:d} ({} train samples)'.format(i, len(active_learner.indices_labeled)))
+
+    return indices_labeled

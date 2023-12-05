@@ -5,6 +5,7 @@ from Utilities.parsers import parse_config, parse_args, parse_task_config
 from Utilities.comet import CometExperiment
 from Utilities.preprocessing import load_dataset_from_config
 from Utilities.active_learning import load_model, load_query_strategy, load_active_learner, initialize_active_learner
+from Utilities.active_learning import perform_active_learning
 import copy
 import torch
 
@@ -22,6 +23,13 @@ def main():
     # Init Learner & Seed Set
     active_learner = load_active_learner(clf_factory, query_strategy, train)
     indices_labeled = initialize_active_learner(active_learner, train.y, config)
+
+    indices_labeled = perform_active_learning(
+        active_learner=active_learner,
+        train=train,
+        indices_labeled=indices_labeled,
+        config=config
+    )
 
     return
 
