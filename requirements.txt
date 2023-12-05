@@ -3,3 +3,5 @@ transformers[torch]
 datasets
 accelerate
 evaluate
+scikit_learn
+numpy

@@ -1,7 +1,9 @@
 {
   "SEED_SIZE": 25,
   "ITERATIONS": 20,
+  "QUERY_BATCH_SIZE": 25,
   "SET_EVAL_ITERATIONS": 50,
   "MODEL_NAME": "roberta-base",
-  "CACHE_ADR": "./cache"
+  "CACHE_ADR": "./cache",
+  "SHARED_CACHE_ADR": "./cache"
 }

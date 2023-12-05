@@ -3,11 +3,13 @@ import sys
 
 from Utilities.parsers import parse_config, parse_args, parse_task_config
 from Utilities.comet import CometExperiment
+from Utilities.preprocessing import load_dataset_from_config
 import copy
 import torch
 
 def main():
-    pass
+    (train, test) = load_dataset_from_config(task_config, config=config, args=args)
+    return
 
 
 if __name__ == '__main__':
