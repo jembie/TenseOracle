@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument(
         '--filter_strategy_name',
         type=str,
-        default="RandomFilter",
+        default="None",
         help='Name of the Filter Strategy to employ'
     )
 

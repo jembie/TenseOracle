@@ -5,3 +5,4 @@ accelerate
 evaluate
 scikit_learn
 numpy
+torch

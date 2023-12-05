@@ -1,0 +1,1 @@
+from small_text.query_strategies.strategies import RandomSampling, PredictionEntropy
