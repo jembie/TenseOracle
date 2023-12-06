@@ -1,4 +1,3 @@
-import os
 import sys
 
 from Utilities.parsers import parse_config, parse_args, parse_task_config
@@ -6,8 +5,11 @@ from Utilities.comet import CometExperiment
 from Utilities.preprocessing import load_dataset_from_config
 from Utilities.active_learning import load_model, load_query_strategy, load_active_learner, initialize_active_learner
 from Utilities.active_learning import perform_active_learning
+from Utilities.evaluation import assess_dataset_quality
 import copy
 import torch
+import numpy as np
+
 
 def main():
     (train, test) = load_dataset_from_config(task_config, config=config, args=args)
@@ -30,6 +32,23 @@ def main():
         indices_labeled=indices_labeled,
         config=config
     )
+    indices_htl = active_learner.query_strategy.indices_htl
+    indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)
+    indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
+
+    set_performance = assess_dataset_quality(
+        active_learner=active_learner,
+        train=train,
+        indices_labeled=indices_labeled,
+        indices_unlabeled=indices_unused,
+        indices_htl=indices_htl,
+        test=test,
+        num_iterations=config["SET_EVAL_ITERATIONS"],
+        config=config,
+        args=args,
+    )
+
+    experiment.log_metrics(set_performance)
 
     return
 

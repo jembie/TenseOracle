@@ -6,3 +6,4 @@ evaluate
 scikit_learn
 numpy
 torch
+deepsig
