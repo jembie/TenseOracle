@@ -43,12 +43,18 @@ def main():
         indices_unlabeled=indices_unused,
         indices_htl=indices_htl,
         test=test,
-        num_iterations=config["SET_EVAL_ITERATIONS"],
         config=config,
         args=args,
+        experiment=experiment,
     )
 
-    experiment.log_metrics(set_performance)
+    metrics_to_log = {
+        "avg_duration": sum(tt := active_learner.query_strategy.time_tracker)/len(tt),
+        **set_performance
+    }
+
+    experiment.log_metrics(metrics_to_log)
+    experiment.log_results(np.array(active_learner.query_strategy.time_tracker), "durations")
 
     return
 

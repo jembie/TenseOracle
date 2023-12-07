@@ -1,6 +1,7 @@
 import os
 import comet_ml
-
+import numpy as np
+from pathlib import Path
 
 class CometExperiment():
     def __init__(self, args, config, task_config):
@@ -10,6 +11,7 @@ class CometExperiment():
         self.workspace = args.comet_workspace
         self.api_key = args.comet_api_key
         self.project_name = cpn if (cpn := args.comet_project_name) is not None else task_config["task_name"]
+        self.cache_adr = config["CACHE_ADR"]
 
         if (not self.api_key) != (not self.workspace):
             raise Exception(f"""
@@ -23,7 +25,7 @@ class CometExperiment():
         else:
             self.EXPERIMENT = None
 
-    def setup_comet(self):
+    def setup_comet(self) -> comet_ml.Experiment:
         # 🤗 creates its own experiment if not set to 'DISABLED'
         os.environ['COMET_MODE'] = 'DISABLED'
 
@@ -53,3 +55,19 @@ class CometExperiment():
             pass
         else:
             self.EXPERIMENT.log_metrics(dictionary)
+
+    def log_results(self, f1_scores: list, name: str):
+        """
+        Converts a list of f1_scores into a numpy array
+        Saves this numpy array to a .npy file
+        Uploads the file to comet as an asset
+        :param f1_scores:
+        :return:
+        """
+        if self.EXPERIMENT is None:
+            pass
+        else:
+            f1_scores = np.array(f1_scores)
+            path = Path(f"{self.cache_adr}/{name}.npy")
+            np.save(path, f1_scores)
+            self.EXPERIMENT.log_asset(path, file_name=f"{name}.npy")

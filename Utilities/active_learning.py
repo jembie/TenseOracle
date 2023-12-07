@@ -4,6 +4,7 @@ from Strategies import acquisition_functions, filters
 from small_text import QueryStrategy, PoolBasedActiveLearner, random_initialization_balanced
 import numpy as np
 import gc
+import time
 
 
 def load_model(config: dict, num_classes):
@@ -27,11 +28,13 @@ def load_model(config: dict, num_classes):
 
 class HTLOverseer(QueryStrategy):
     """
-    A Wrapper for a QueryStrategy that simply uses A certain FilterStrategy
-    to keep the QueryStrategy from Sampling Stupid samples from which
-    the Overseer doesn't think they will help
-    It tracks those samples and at the end we'll compare performance
-    with and without those stupid samples to find out whether our FilterStrategy Worked.
+    A Wrapper for a QueryStrategy and a FilterStrategy.
+    Filters requested samples with FilterStrategy i.e. the HTLOverseer
+    can keep samples from being queried, but not request others.
+    Goal: keep the QueryStrategy from Sampling Stupid samples from which
+    we assume the model will learn much, to improve performance and save budget.
+    It tracks denied samples and at the end we'll compare performance
+    with and without those samples to find out whether our FilterStrategy only denied harmful ones.
     """
 
     def __init__(self, filter_strategy: filters.FilterStrategy, query_strategy: QueryStrategy):
@@ -39,6 +42,7 @@ class HTLOverseer(QueryStrategy):
         self.filter_strategy = filter_strategy
         self.query_strategy = query_strategy
         self.htl_tracker = []  # Here is where I'd put my HTL samples if I had any
+        self.time_tracker = []
 
     def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10, ssl_step=False):
         unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(self.htl_tracker))
@@ -46,6 +50,7 @@ class HTLOverseer(QueryStrategy):
         if not self.filter_strategy:
             # If no Filter Strategy in use just return samples as is
             return chosen_samples
+        start_time = time.time()
         htl_mask = self.filter_strategy(indices_chosen=chosen_samples,
                                         confidence=confidence,
                                         indices_already_avoided=self.htl_tracker,
@@ -55,7 +60,8 @@ class HTLOverseer(QueryStrategy):
                                         indices_labeled=indices_labeled,
                                         y=y,
                                         n=n)
-
+        duration = time.time() - start_time
+        self.time_tracker.append(duration)
         # Add HTL samples to HTL tracker
         self.htl_tracker += list(chosen_samples[htl_mask])
 

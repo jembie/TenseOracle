@@ -24,7 +24,7 @@ def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
                            indices_unlabeled: np.ndarray,
                            indices_htl: np.ndarray,
                            test,
-                           num_iterations=4,
+                           experiment
                            ):
     '''
     Retrains and evaluates model multiple times with the same set because we don't trust
@@ -48,7 +48,7 @@ def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
     for experiment_name in ["no_htl", "htl", "random"]:  # , "original"]:
         print(experiment_name)
         if experiment_name == "no_htl":
-            # Evaluate without any HTL (i.e. less samples but higher quality we assume)
+            # Evaluate without any HTL (i.e. fewer samples but higher quality we assume)
             indices_labeled_backup = copy.deepcopy(indices_labeled)
         elif experiment_name == "random":
             # Low Bar: Evaluate with random replacement for HTL
@@ -78,6 +78,8 @@ def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
             # Use different replacements for HTL in next test if in "random" mode
             if experiment_name == "random":
                 indices_labeled_backup = replace_htl_with_random(indices_unlabeled)
+
+        experiment.log_results(results[experiment_name], experiment_name)
 
     # Collect all Statistics
     median_no_htl = np.median(np.array(results["no_htl"]))
