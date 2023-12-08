@@ -155,7 +155,7 @@ def domination_test(active_learner: PoolBasedActiveLearner,
                    step,
                    experiment: CometExperiment):
     indices_labeled = active_learner.indices_labeled
-    indices_htl = np.array(active_learner.query_strategy.htl_tracker)
+    indices_htl = active_learner.query_strategy.indices_htl
     indices_unlabeled = np.setdiff1d(np.arange(len(train)), np.concatenate((indices_htl, indices_labeled)))
     results = compare_datasets(active_learner=active_learner,
                                train=train,
