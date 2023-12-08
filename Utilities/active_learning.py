@@ -2,6 +2,7 @@ import torch
 from small_text import TransformerBasedClassificationFactory, TransformerModelArguments
 from Strategies import acquisition_functions, filters
 from small_text import QueryStrategy, PoolBasedActiveLearner, random_initialization_balanced
+from Utilities.evaluation import domination_test
 import numpy as np
 import gc
 import time
@@ -126,8 +127,11 @@ def initialize_active_learner(active_learner, y_train, config):
 
 def perform_active_learning(active_learner: PoolBasedActiveLearner,
                             config,
+                            args,
                             indices_labeled,
                             train,
+                            test,
+                            experiment,
                             ):
     for i in range(config["ITERATIONS"]):
         # Clear Memory
@@ -146,5 +150,17 @@ def perform_active_learning(active_learner: PoolBasedActiveLearner,
 
         # When evaluating we ignore Pseudo-labeled data because we don't know whether it is true
         print('Iteration #{:d} ({} train samples)'.format(i, len(active_learner.indices_labeled)))
+        if args.dom_test:
+            dom_results = domination_test(
+                active_learner=active_learner,
+                train=train,
+                test=test,
+                config=config,
+                args=args,
+                step=i,
+                experiment=experiment
+            )
+            for key in dom_results.keys():
+                print(f"{key}: {dom_results[key]}")
 
     return indices_labeled

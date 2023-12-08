@@ -27,10 +27,13 @@ def main():
     indices_labeled = initialize_active_learner(active_learner, train.y, config)
 
     indices_labeled = perform_active_learning(
+        config=config,
+        args=args,
         active_learner=active_learner,
         train=train,
+        test=test,
         indices_labeled=indices_labeled,
-        config=config
+        experiment=experiment,
     )
     indices_htl = active_learner.query_strategy.indices_htl
     indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)

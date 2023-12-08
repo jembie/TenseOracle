@@ -50,11 +50,12 @@ class CometExperiment():
 
         return experiment
 
-    def log_metrics(self, dictionary: dict):
+    def log_metrics(self, dictionary: dict, step=None):
         if self.EXPERIMENT is None:
             pass
         else:
-            self.EXPERIMENT.log_metrics(dictionary)
+            self.EXPERIMENT.log_metrics(dictionary, step=step)
+
 
     def log_results(self, f1_scores: list, name: str):
         """

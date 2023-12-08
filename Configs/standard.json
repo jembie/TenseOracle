@@ -4,6 +4,7 @@
   "QUERY_BATCH_SIZE": 25,
   "TRAIN_BATCH_SIZE": 16,
   "SET_EVAL_ITERATIONS": 50,
+  "DOM_EVAL_ITERATIONS": 6,
   "NUM_EPOCHS": 10,
   "LR": 2e-5,
   "MODEL_NAME": "roberta-base",
