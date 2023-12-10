@@ -1,0 +1,8 @@
+{
+  "dataset_path": "sst2",
+  "task_class": "text_classification",
+  "task_name": "xSST2",
+  "input_text_column": "sentence",
+  "label_column": "label",
+  "test_set_name": "validation"
+}
