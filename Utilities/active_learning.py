@@ -130,6 +130,23 @@ def initialize_active_learner(active_learner, y_train, config):
     return indices_initial
 
 
+def active_learning_step(active_learner: PoolBasedActiveLearner, train, indices_labeled, num_samples):
+    # Clear Memory
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    indices_queried = active_learner.query(num_samples=num_samples)
+
+    # Simulate Oracle
+    y = train.y[indices_queried]
+
+    # Pass labels to active learner and retrain model
+    active_learner.update(y)
+
+    indices_labeled = np.concatenate([indices_labeled, indices_queried])
+    return indices_labeled
+
+
 def perform_active_learning(active_learner: PoolBasedActiveLearner,
                             config,
                             args,
@@ -138,20 +155,14 @@ def perform_active_learning(active_learner: PoolBasedActiveLearner,
                             test,
                             experiment,
                             ):
+    total_budget = config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
     for i in range(config["ITERATIONS"]):
-        # Clear Memory
-        gc.collect()
-        torch.cuda.empty_cache()
-
-        indices_queried = active_learner.query(num_samples=config["QUERY_BATCH_SIZE"])
-
-        # Simulate Oracle
-        y = train.y[indices_queried]
-
-        # Pass labels to active learner and retrain model
-        active_learner.update(y)
-
-        indices_labeled = np.concatenate([indices_labeled, indices_queried])
+        indices_labeled = active_learning_step(
+            active_learner=active_learner,
+            train=train,
+            indices_labeled=indices_labeled,
+            num_samples=config["QUERY_BATCH_SIZE"],
+        )
 
         # When evaluating we ignore Pseudo-labeled data because we don't know whether it is true
         print('Iteration #{:d} ({} train samples)'.format(i, len(active_learner.indices_labeled)))
@@ -167,5 +178,14 @@ def perform_active_learning(active_learner: PoolBasedActiveLearner,
             )
             for key in dom_results.keys():
                 print(f"{key}: {dom_results[key]}")
+    if args.use_up_entire_budget:
+        while len(indices_labeled) < total_budget:
+            indices_labeled = active_learning_step(
+                active_learner=active_learner,
+                train=train,
+                indices_labeled=indices_labeled,
+                num_samples=min(config["QUERY_BATCH_SIZE"], total_budget - len(indices_labeled)),
+            )
+        assert len(indices_labeled) == total_budget
 
     return indices_labeled

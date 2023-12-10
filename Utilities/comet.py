@@ -37,7 +37,7 @@ class CometExperiment():
 
         comet_ml.config.set_global_experiment(experiment)
 
-        experiment.add_tag(self.args.filter_strategy_name)
+        experiment.add_tag(self.args.filter_strategy_name + ("-full-budget" if self.args.use_up_entire_budget else ""))
 
         # Commit Task Name to differentiate Task when all is sent to the same project
         experiment.log_parameter("task", self.task_config["task_name"])

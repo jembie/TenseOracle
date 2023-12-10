@@ -61,6 +61,12 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--use_up_entire_budget',
+        action="store_true",
+        help='''Add some extra iterations at end to use up entire saved budget'''
+    )
+
+    parser.add_argument(
         '--gpu_optional',
         action="store_true",
         help="If set then don't raise exception if no GPU found"
