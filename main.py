@@ -20,6 +20,7 @@ def main():
     query_strategy = load_query_strategy(strategy_name=args.strategy_name,
                                          filter_name=args.filter_strategy_name,
                                          config=config,
+                                         args=args,
                                          num_classes=num_classes)
 
     # Init Learner & Seed Set

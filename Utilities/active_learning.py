@@ -3,6 +3,7 @@ from small_text import TransformerBasedClassificationFactory, TransformerModelAr
 from Strategies import acquisition_functions, filters
 from small_text import QueryStrategy, PoolBasedActiveLearner, random_initialization_balanced
 from Utilities.evaluation import domination_test
+from Utilities.preprocessing import load_tokenizer
 import numpy as np
 import gc
 import time
@@ -76,7 +77,7 @@ class HTLOverseer(QueryStrategy):
         return np.array(list(set(self.htl_tracker)))
 
 
-def load_query_strategy(strategy_name, filter_name, config, num_classes) -> HTLOverseer:
+def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -> HTLOverseer:
     """
     Loads a QueryStrategy (also called AcquisitionFunction)
     and Wraps a filter around it that is supposed to
@@ -91,6 +92,10 @@ def load_query_strategy(strategy_name, filter_name, config, num_classes) -> HTLO
 
     kwargs = {
         "clf_factory": load_model(config, num_classes),
+        "tokenizer": load_tokenizer(config["MODEL_NAME"], config["SHARED_CACHE_ADR"]),
+        "device": "cpu:0" if torch.cuda.device_count() == 0 else "cuda:0",
+        "shared_cache": config["SHARED_CACHE_ADR"],
+        "seed": args.random_seed,
     }
     if filter_name != "None":
         filter_strategy = getattr(filters, filter_name)(**kwargs)
