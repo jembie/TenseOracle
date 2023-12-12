@@ -12,7 +12,7 @@ def load_tokenizer(model_name: str, cache_dir: str):
     return tr.AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
 
 
-def load_from_hub(task_config: dict):
+def load_from_hub(task_config: dict, seed = 42):
     # Some DS are grouped together (Glue) if we want one of those we need a subset of the Group
     subset = task_config["subset"] if "subset" in task_config else None
     # Some tasks require additionally local data
@@ -23,6 +23,9 @@ def load_from_hub(task_config: dict):
                               name=subset,
                               data_dir=data_dir,
                               keep_in_memory=True)
+
+    if dataset["train"].num_rows > 20000:
+        dataset["train"] = dataset["train"].train_test_split(train_size=20000, shuffle=True, seed=seed)["train"]
 
     # Some Datasets have only labeled validation (and no test) sets we use those for testing
     dataset["test"] = dataset[task_config["test_set_name"]]
@@ -36,7 +39,7 @@ def load_dataset_from_config(task_config: dict, config: dict, args) -> Tuple[Tra
     :returns a tuple of a (Train, Test) Set in TransformerDataset Format
     '''
     tokenizer = load_tokenizer(config["MODEL_NAME"], config["SHARED_CACHE_ADR"])
-    dataset = load_from_hub(task_config)
+    dataset = load_from_hub(task_config, seed=args.random_seed)
 
     match task_config:
         case {  # Simple Text Classification from Huggingface
