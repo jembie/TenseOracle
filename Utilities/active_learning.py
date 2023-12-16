@@ -1,5 +1,6 @@
 import torch
 from small_text import TransformerBasedClassificationFactory, TransformerModelArguments
+import Strategies
 from Strategies import acquisition_functions, filters
 from small_text import QueryStrategy, PoolBasedActiveLearner, random_initialization_balanced
 from Utilities.evaluation import domination_test
@@ -101,7 +102,7 @@ def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -
         "seed": args.random_seed,
     }
     if filter_name != "None":
-        filter_strategy = getattr(filters, filter_name)(**kwargs)
+        filter_strategy = getattr(Strategies, filter_name)(**kwargs)
     else:
         filter_strategy = None
     query_strategy = HTLOverseer(filter_strategy=filter_strategy, query_strategy=query_strategy)
