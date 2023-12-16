@@ -18,7 +18,8 @@ class FilterStrategy(ABC):
                  indices_unlabeled: np.ndarray,
                  indices_labeled: np.ndarray,
                  y: np.ndarray,
-                 n=10) -> np.ndarray:
+                 n=10,
+                 iteration=0) -> np.ndarray:
         '''
         In Short: Takes in np.ndarray of chosen sample indices and returns a boolean mask (np.ndarray)
         with False on all the samples that are ok (not HTL) and True on all the samples that are considered HTL.

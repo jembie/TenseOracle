@@ -45,8 +45,10 @@ class HTLOverseer(QueryStrategy):
         self.query_strategy = query_strategy
         self.htl_tracker = []  # Here is where I'd put my HTL samples if I had any
         self.time_tracker = []
+        self.iter_counter = 0
 
-    def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10, ssl_step=False):
+    def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10):
+        self.iter_counter += 1
         unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(self.htl_tracker))
         chosen_samples, confidence = self.query_strategy.query(clf, _dataset, unlabeled_pool, indices_labeled, y, n=n)
         if not self.filter_strategy:
@@ -61,7 +63,8 @@ class HTLOverseer(QueryStrategy):
                                         indices_unlabeled=indices_unlabeled,
                                         indices_labeled=indices_labeled,
                                         y=y,
-                                        n=n)
+                                        n=n,
+                                        iteration=self.iter_counter)
         duration = time.time() - start_time
         self.time_tracker.append(duration)
         # Add HTL samples to HTL tracker
