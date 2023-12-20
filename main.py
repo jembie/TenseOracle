@@ -70,12 +70,13 @@ if __name__ == '__main__':
     task_config = parse_task_config(args)
     experiment = CometExperiment(args, config, task_config)
 
+    time.sleep(10)
     if torch.cuda.is_available():
         cuda = [torch.cuda.device(i) for i in range(torch.cuda.device_count())]
         print(f"cuda available, using one of those: {cuda}")
     else:
         if not args.gpu_optional:
-            time.sleep(10)
+            time.sleep(30)
             if not torch.cuda.is_available():
                 raise Exception("No GPU Found, If no GPU required please set --gpu_optional")
 
