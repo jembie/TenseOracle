@@ -48,9 +48,8 @@ def compare_datasets(active_learner,
     unused_budget = len(indices_htl)
 
     def replace_htl_with_random(indices_unlabeled):
-        random_replacement_for_htl = np.random.choice(indices_unlabeled, unused_budget, replace=False).astype(
-            np.int64)
-        indices_labeled_backup = np.concatenate((indices_labeled, random_replacement_for_htl), axis=0)
+        random_replacement_for_htl = np.random.choice(indices_unlabeled, unused_budget, replace=False).astype(np.int64)
+        indices_labeled_backup = np.concatenate((indices_labeled, random_replacement_for_htl), axis=0, dtype=np.int64)
         return indices_labeled_backup
 
     for experiment_name in ["no_htl", "htl", "random"]:
@@ -75,7 +74,7 @@ def compare_datasets(active_learner,
             # Bring in diversity by setting diff seed each time
             set_random_seed(random_seed + i)
             # Shuffle Dataset each time to get better evaluation
-            indices_labeled_ = copy.copy(indices_labeled_backup)  # make copy to not shuffle original
+            indices_labeled_ = copy.copy(indices_labeled_backup).astype(np.int64)  # make copy to not shuffle original
             np.random.shuffle(indices_labeled_)
 
             y_initial = train.y[indices_labeled_].astype(np.int64)
