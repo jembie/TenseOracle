@@ -10,9 +10,11 @@ from Utilities.evaluation import assess_dataset_quality
 import copy
 import torch
 import numpy as np
+from Utilities.general import set_random_seed
 
 
 def main():
+    set_random_seed(args.random_seed)
     (train, test) = load_dataset_from_config(task_config, config=config, args=args)
 
     num_classes = len(set(train.y).union(test.y))
