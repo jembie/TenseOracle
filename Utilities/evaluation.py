@@ -65,7 +65,7 @@ def compare_datasets(active_learner,
         elif experiment_name == "htl":
             # The dataset as requested if Filter not active (probably)
             # We assume: Worse due to HTL samples
-            indices_labeled_backup = np.concatenate((indices_labeled, indices_htl), axis=0, dtype=np.int64)
+            indices_labeled_backup = np.concatenate((indices_labeled, indices_htl), axis=0)
         else:
             raise NotImplementedError(f"Experiment with name {experiment_name} is not yet implemented")
 
