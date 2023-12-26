@@ -78,9 +78,10 @@ if __name__ == '__main__':
         print(f"cuda available, using one of those: {cuda}")
     else:
         if not args.gpu_optional:
-            time.sleep(60) # Check in 60s again
-            if not torch.cuda.is_available():
-                raise Exception("No GPU Found, If no GPU required please set --gpu_optional")
+            print(torch.version.cuda)
+            time.sleep(120)  # Check in 60s again
+            if not torch.cuda.is_available() and torch.cuda.device_count() == 0:
+                raise Exception("No GPU Found, If none required please set --gpu_optional")
 
     main()
     sys.exit(0)
