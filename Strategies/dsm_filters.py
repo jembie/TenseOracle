@@ -12,6 +12,8 @@ Idea:
     Trivia: Loser short for Losers Can't Cheat, because samples are allowed to choose labels
     i.e. set their own rules (we call this "Cheating"). HTL samples are expected to still Lose
 """
+import torch.cuda
+
 from Strategies.filters import FilterStrategy
 from collections import defaultdict
 from small_text import TransformerBasedClassificationFactory, Dataset, Classifier
@@ -96,6 +98,7 @@ class LoserFilter_SSL_Variety(FilterStrategy):
         # Train Model
         for i in range(10):
             # Create model & Add Cartographer
+            torch.cuda.empty_cache()
             pseudo_clf = self.clf_factory.new()
             pseudo_clf.num_epochs = 5
             pseudo_clf.callbacks.append(cartographer)
