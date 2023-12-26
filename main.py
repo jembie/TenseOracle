@@ -74,9 +74,11 @@ if __name__ == '__main__':
 
     time.sleep(15)
     if torch.cuda.is_available():
+        experiment.log_parameters({"GPU": True})
         cuda = [torch.cuda.device(i) for i in range(torch.cuda.device_count())]
         print(f"cuda available, using one of those: {cuda}")
     else:
+        experiment.log_parameters({"GPU": False})
         if not args.gpu_optional:
             print(torch.version.cuda)
             time.sleep(120)  # Check in 60s again
