@@ -99,7 +99,7 @@ class SmallTextCartographer():
         return
 
 
-def log_failed_attempts(seed, config_name, log_adr):
+def log_failed_attempts(seed, config_name, filter_name, log_adr):
     """
     Problem: Sometimes Slurm torch doesn't find the GPU that was assigned by Slurm
     Assumption: Some Nodes are broken
@@ -113,8 +113,8 @@ def log_failed_attempts(seed, config_name, log_adr):
     if not os.path.exists(file_name):
         with open(file_name, 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['SEED', 'CONFIG_NAME'])
+            writer.writerow(['SEED', 'CONFIG_NAME', 'FILTER'])
 
     with open(file_name, 'a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([seed, config_name])
+        writer.writerow([seed, config_name, filter_name])

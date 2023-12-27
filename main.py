@@ -81,7 +81,7 @@ if __name__ == '__main__':
         if not args.gpu_optional:
             print(torch.version.cuda)
             if torch.cuda.device_count() == 0:
-                log_failed_attempts(args.random_seed, args.task_config, config["SHARED_CACHE_ADR"])
+                log_failed_attempts(args.random_seed, args.task_config, args.filter_strategy_name, config["SHARED_CACHE_ADR"])
                 raise Exception("No GPU Found, If none required please set --gpu_optional")
 
     main()
