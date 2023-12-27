@@ -10,7 +10,7 @@ from Utilities.evaluation import assess_dataset_quality
 import copy
 import torch
 import numpy as np
-from Utilities.general import set_random_seed
+from Utilities.general import set_random_seed, log_failed_attempts
 
 
 def main():
@@ -72,7 +72,6 @@ if __name__ == '__main__':
     task_config = parse_task_config(args)
     experiment = CometExperiment(args, config, task_config)
 
-    time.sleep(15)
     if torch.cuda.is_available():
         experiment.log_parameters({"GPU": True})
         cuda = [torch.cuda.device(i) for i in range(torch.cuda.device_count())]
@@ -81,8 +80,8 @@ if __name__ == '__main__':
         experiment.log_parameters({"GPU": False})
         if not args.gpu_optional:
             print(torch.version.cuda)
-            time.sleep(120)  # Check in 60s again
-            if not torch.cuda.is_available() and torch.cuda.device_count() == 0:
+            if torch.cuda.device_count() == 0:
+                log_failed_attempts(args.random_seed, args.task_config, config["SHARED_CACHE_ADR"])
                 raise Exception("No GPU Found, If none required please set --gpu_optional")
 
     main()

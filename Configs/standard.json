@@ -10,5 +10,5 @@
   "LR": 2e-5,
   "MODEL_NAME": "roberta-base",
   "CACHE_ADR": "./cache",
-  "SHARED_CACHE_ADR": "./cache"
+  "SHARED_CACHE_ADR": "/beegfs/.global0/ws/jipo020b-AL/shared_cache"
 }

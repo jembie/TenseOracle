@@ -117,3 +117,75 @@ class LoserFilter_SSL_Variety(FilterStrategy):
         htl_mask = cartographer.correctness[:len(indices_chosen)] <= threshold
 
         return htl_mask
+
+
+class LoserFilter_Plain(FilterStrategy):
+    '''
+    A Losers can't Cheat Filter (CodeName DSM-LevelUp-Part1)
+
+    - Use no extra train data except chosen samples
+    - Weight recent predictions stronger for calculating pseudo labels
+    - Doesn't skip first 2 Iters for Pseudo Labeling
+    - Delays start by 5 Iters
+    '''
+    def __init__(self, **kwargs):
+        '''
+        :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["clf_factory"])
+        :return:
+        '''
+        self.clf_factory: TransformerBasedClassificationFactory = kwargs["clf_factory"]
+        self.predictions_over_time = []
+        self.already_labeled_htl = defaultdict(int)
+        self.last_labeled_set_size = 0
+        self.current_iteration = 0
+
+    def __call__(self,
+                 indices_chosen: np.ndarray,
+                 indices_already_avoided: list,
+                 confidence: np.ndarray,
+                 clf: Classifier,
+                 dataset: Dataset,
+                 indices_unlabeled: np.ndarray,
+                 indices_labeled: np.ndarray,
+                 y: np.ndarray,
+                 n=10,
+                 iteration=0) -> np.ndarray:
+        if self.current_iteration < iteration:
+            # Track Predictions over Iteration for Pseudo Labels Later on
+            self.current_iteration = iteration
+            probabilities = clf.predict_proba(dataset)
+            self.predictions_over_time.append(probabilities)
+        if len(self.predictions_over_time) < 5:
+            # Do Nothing In Early Epochs because not ready
+            return np.zeros_like(indices_chosen, dtype=bool)
+
+        # convert to np.array
+        predictions_over_time = np.array(self.predictions_over_time)
+        votes = np.argmax(predictions_over_time, axis=2)
+        pseudo_labels = [np.argmax(np.bincount(votes[:, i], weights=np.arange(1, votes.shape[0]+1))) for i in indices_chosen]
+
+
+        # Entire Labelled & Pseudo Labeled dataset for Training
+        diverse_labelled_dataset = dataset[np.concatenate([indices_chosen, indices_labeled])].clone()
+        diverse_labelled_dataset.y = np.concatenate([pseudo_labels, y], axis=0, dtype=np.int64)
+
+        # We also track already labeled data to establish a baseline of what we consider weird
+        cartographer = SmallTextCartographer(dataset=diverse_labelled_dataset, outputs_to_probabilities=calc_probs)
+        val_set = diverse_labelled_dataset[:10].clone()
+        val_set.y = np.array(diverse_labelled_dataset.y[:10], dtype=np.int64)
+        # Train Model
+        for i in range(10):
+            torch.cuda.empty_cache()
+            pseudo_clf = self.clf_factory.new()
+            pseudo_clf.num_epochs = 5
+            pseudo_clf.callbacks.append(cartographer)
+            # We don't care about validation set at all, but we need to pass something so the smallest DS we have avail.
+            pseudo_clf.fit(train_set=diverse_labelled_dataset, validation_set=val_set)
+        # Calculate Outlier Threshold as mean - 2 * std
+        m = np.mean(cartographer.correctness)
+        std = np.std(cartographer.correctness)
+        threshold = m - 2*std
+        # Which of the chosen Samples are exceptionally hard to predict?
+        htl_mask = cartographer.correctness[:len(indices_chosen)] <= threshold
+
+        return htl_mask

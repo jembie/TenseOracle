@@ -4,6 +4,8 @@ import random
 from small_text import TransformersDataset, Classifier
 from typing import Callable
 from transformers import TrainerCallback
+import csv
+import os
 
 def set_random_seed(seed):
     # set random seed
@@ -95,3 +97,24 @@ class SmallTextCartographer():
         probabilities = predictions[1]
         self.process_predictions(probabilities=probabilities)
         return
+
+
+def log_failed_attempts(seed, config_name, log_adr):
+    """
+    Problem: Sometimes Slurm torch doesn't find the GPU that was assigned by Slurm
+    Assumption: Some Nodes are broken
+    Solution: If no GPU found stop and log Experiment Config and run Again
+    :param seed:
+    :param config_name:
+    :param file_name:
+    :return:
+    """
+    file_name = log_adr + '/gpu_less_runs.csv'
+    if not os.path.exists(file_name):
+        with open(file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['SEED', 'CONFIG_NAME'])
+
+    with open(file_name, 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([seed, config_name])
