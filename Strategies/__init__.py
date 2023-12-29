@@ -1,2 +1,2 @@
 from Strategies.filters import RandomFilter
-from Strategies.dsm_filters import LoserFilter_SSL_Variety, LoserFilter_Plain
+from Strategies.dsm_filters import LoserFilter_SSL_Variety, LoserFilter_Plain, LoserFilter_Optimized_Pseudo_Labels
