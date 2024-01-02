@@ -1,3 +1,3 @@
 from Strategies.filters import RandomFilter
 from Strategies.dsm_filters import LoserFilter_SSL_Variety, LoserFilter_Plain, LoserFilter_Optimized_Pseudo_Labels
-from Strategies.AE_filters import AutoFilter_Chen_Like
+from Strategies.AE_filters import AutoFilter_Chen_Like, AutoFilter_LSTM
