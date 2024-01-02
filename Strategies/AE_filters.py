@@ -20,10 +20,13 @@ from small_text import TransformerBasedClassificationFactory, Dataset, Classifie
 import numpy as np
 from Utilities.general import SmallTextCartographer
 from scipy.special import softmax
+from scipy.stats import entropy
 from torch import nn
 import copy
 from torch import optim
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
+from transformers import RobertaTokenizer
 
 
 class AutoFilter_Chen_Like(FilterStrategy):
@@ -276,3 +279,196 @@ class AutoFilter_Chen_Like(FilterStrategy):
             self.outlier_scores = self.detect_outliers(ensemble, embeddings)
 
         return self.outlier_scores[indices_chosen]
+
+
+class Autoencoder(nn.Module):
+    """
+    A simple LSTM Based AutoEncoder
+    """
+    def __init__(self, vocab_size, embed_dim):
+        super(Autoencoder, self).__init__()
+
+        self.embedding = nn.Embedding(vocab_size, embed_dim)
+
+        # Encoder
+        self.encoder_lstm1 = nn.LSTM(embed_dim, 256, 3, batch_first=True)
+        self.encoder_lstm2 = nn.LSTM(256, 128, 3, batch_first=True)
+        self.encoder_linear = nn.Linear(128, 64)
+
+        # Decoder
+        self.decoder_lstm1 = nn.LSTM(64, 128, 3, batch_first=True)
+        self.decoder_lstm2 = nn.LSTM(128, 256, 3, batch_first=True)
+        self.decoder_linear = nn.Linear(256, vocab_size)
+        self.softmax = nn.LogSoftmax(dim=1)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        x, _ = self.encoder_lstm1(x)
+        x, _ = self.encoder_lstm2(x)
+        x = self.encoder_linear(x)  # Consider the last output of the sequence
+
+        x, _ = self.decoder_lstm1(x)
+        x, _ = self.decoder_lstm2(x)
+        x = self.decoder_linear(x)
+        x = self.softmax(x)
+
+        return x
+
+class AutoFilter_LSTM(FilterStrategy):
+    '''
+    Idea: Use Auto-encoders to detect outliers
+    Codename: AE-Class-Certain-T1
+    Features:
+    - LSTM based Autoencoders
+    - Use 500 samples with currently highest entropy to define baseline
+    - Consider only the 1% (i.e. about 5 Samples) with the highest Loss among the 500 as HTL
+    - Train Ensemble
+    - Create Diversity by pseudo labeling data and splitting dataset by class label
+    '''
+    def __init__(self, tokenizer: RobertaTokenizer, device, **kwargs):
+        '''
+        :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["tokenizer"])
+        :return:
+        '''
+        self.tokenizer = tokenizer
+        self.committee = []
+        self.committee_size = None
+        self.EPOCH_COUNT = 10
+        self.criterion = None
+        self.device = device
+        self.threshold = None
+        self.scores = None
+        self.predictions = []
+
+    def train_model(self, dataset)->nn.Module:
+        """
+        Create an LSTM model
+        Train it on the given dataset and return it
+        :param dataset:
+        :return:
+        """
+        # Initialize model, loss, optimizer
+        model = Autoencoder(self.tokenizer.vocab_size, 768)
+        self.criterion = nn.NLLLoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
+        model = model.to(device=self.device)
+
+        EPOCH_COUNT = self.EPOCH_COUNT
+
+        # Create Dataloader
+        data_loader = DataLoader([x[0] for x in dataset.x], batch_size=16, shuffle=True)
+        # Train Loop
+        for epoch in range(EPOCH_COUNT):
+            for idx, line in enumerate(data_loader):
+                line_ = line.to(self.device)
+                optimizer.zero_grad()
+                output = model(line_)
+                loss = self.criterion(torch.transpose(output,dim0=1,dim1=2), line_)
+                loss.backward()
+                optimizer.step()
+                if idx % 500 == 0:
+                    print(f'Epoch [{epoch + 1}/{EPOCH_COUNT}], Loss: {loss.item():.4f}')
+        # Finish Training
+        model.eval()
+        return model
+
+    def calculate_loss(self, text, model: nn.Module):
+        """
+        Takes in a model and an example
+        Let's the model compress and decompress the sample
+        :param text:
+        :param model:
+        :return: Loss achieved during reconstruction
+        """
+        tokens = text[0].to(self.device)
+        output = model(tokens)
+        loss = self.criterion(output, tokens)
+        return loss.item()
+
+
+    def detect_outliers(self, dataset, indices_chosen: np.ndarray):
+        def calc_threshold(model):  # self.scores is None:
+            # Sample the 500 samples with the highest Entropy to calc mean and std for threshold
+            indices_high_entr = np.argsort(self.last_confidence)[:500]
+            # Calculate the loss of the given model on each chosen sample
+            scores = []
+            for idx in tqdm(indices_high_entr):
+                scores.append(self.calculate_loss(dataset.x[idx], model))
+            self.scores = np.array(scores)
+
+            # Calculate threshold as the 99th percentile of the losses,
+            # i.e. the 1% with the highest losses will be considered HTL
+            return np.percentile(self.scores, 99)
+
+        masks = []
+        # Loop over all models in the ensemble
+        for m in self.committee:
+            # Prepare Model
+            m.to(self.device)
+            # Let model vote for what it considers HTL
+            threshold = calc_threshold(m)
+            losses = [self.calculate_loss(dataset.x[idx], model=m) for idx in indices_chosen]
+            # Collect Votes
+            masks.append(np.array(losses) > threshold)
+            # Clean Up afterwards
+            m.to("cpu:0")
+            torch.cuda.empty_cache()
+
+        # Every sample that gets a majority vote is considered HTL
+        htl_mask = np.sum(np.stack(masks), axis=0) > (len(self.committee)//2)
+
+        return htl_mask
+
+    def __call__(self,
+                 indices_chosen: np.ndarray,
+                 indices_already_avoided: list,
+                 confidence: np.ndarray,
+                 clf: Classifier,
+                 dataset: Dataset,
+                 indices_unlabeled: np.ndarray,
+                 indices_labeled: np.ndarray,
+                 y: np.ndarray,
+                 n=10,
+                 iteration=0) -> np.ndarray:
+        predictions = clf.predict_proba(dataset)
+        self.predictions.append(predictions)
+        self.last_confidence = confidence
+
+        if iteration < 6:  # Skip first 6 iterations because CLF not useful
+            return np.zeros(indices_chosen.shape, dtype=bool)
+
+        torch.cuda.empty_cache()
+        if self.committee_size is None:
+            pred = np.array(self.predictions)
+            # Use Average prediction of the last 4 Epochs as those are usually the most reliable
+            pred_avg = np.average(pred[-4:], axis=0)
+            # Calculate Certainty of average distribution (i.e. did they all agree/disagree were they all uncertain?)
+            entr = entropy(pred_avg, axis=1)
+            # Which Samples have exceptionally high entropy
+            entr_mask = entr < np.mean(entr)+2*np.std(entr)
+            # Assign the most likely class to each sample based on averaged distributions
+            classes = np.argmax(pred_avg, axis=1)
+
+            # Split Dataset by Class Labels (only consider Labels we are relatively certain about)
+            splits = []
+            for c in set(classes):
+                splits.append(np.argwhere((classes == c) & entr_mask).flatten())
+
+            # 3 models per class
+            self.committee_size = 3 * len(splits)
+
+            # Train Models
+            for i in range(self.committee_size):
+                # Select one of the splits created earlier
+                train_indices = copy.copy(splits[i%len(splits)])
+                np.random.shuffle(train_indices)
+                train_set = dataset[train_indices]
+                # Train model only on samples of one class to get sufficient diversity
+                model = self.train_model(train_set)
+                # "Save" trained Model
+                self.committee.append(model)
+                # Clean Up again
+                model.to("cpu:0")
+                torch.cuda.empty_cache()
+        htl_mask = self.detect_outliers(dataset, indices_chosen)
+        return htl_mask
