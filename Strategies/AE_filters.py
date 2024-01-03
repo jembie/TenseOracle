@@ -472,3 +472,69 @@ class AutoFilter_LSTM(FilterStrategy):
                 torch.cuda.empty_cache()
         htl_mask = self.detect_outliers(dataset, indices_chosen)
         return htl_mask
+
+
+class AutoFilter_LSTM_SIMPLE(AutoFilter_LSTM):
+    """
+    Idea: Use Auto-encoders to detect outliers
+    Codename: AE-THR-WOW-T!
+    Features:
+    - LSTM based Autoencoder
+    - Use 500 samples with currently highest entropy to define baseline
+    - Consider only the 1% (i.e. about 5 Samples) with the highest Loss among the 500 as HTL
+    - Train Single LSTM Model
+    - Doesn't need Labeled data so can start immediately
+    """
+    def __init__(self, tokenizer: RobertaTokenizer, device, **kwargs):
+        '''
+        :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["tokenizer"])
+        :return:
+        '''
+        self.tokenizer = tokenizer
+        self.model = None
+        self.criterion = None
+        self.device = device
+        self.threshold = None
+        self.scores = None
+        self.EPOCH_COUNT = 10
+
+
+    def detect_outliers(self, dataset, indices_chosen: np.ndarray):
+        """
+        Finds HTL Samples, by
+        Calculating threshold based on forced ranking of the 500 samples with currently highest Entropy
+        :param dataset:
+        :param indices_chosen:
+        :return: Mask of which of the chosen samples it thinks is HTL
+        """
+        # Sample 500 samples with the highest Entropy to calc mean and std for threshold
+        indices_high_entr = np.argsort(self.last_confidence)[:500]
+        scores = []
+        for idx in tqdm(indices_high_entr):
+            scores.append(self.calculate_loss(dataset.x[idx], self.model))
+        self.scores = np.array(scores)
+
+        # Forced Ranking: We assume that 1% of samples with the highest Loss in those 500 are HTL
+        self.threshold = np.percentile(self.scores, 99)
+        # Calculate Reconstruction Loss of chosen samples
+        losses = [self.calculate_loss(dataset.x[idx], self.model) for idx in indices_chosen]
+        # Return Mask
+        return np.array(losses) > self.threshold
+
+    def __call__(self,
+                 indices_chosen: np.ndarray,
+                 indices_already_avoided: list,
+                 confidence: np.ndarray,
+                 clf: Classifier,
+                 dataset: Dataset,
+                 indices_unlabeled: np.ndarray,
+                 indices_labeled: np.ndarray,
+                 y: np.ndarray,
+                 n=10,
+                 iteration=0) -> np.ndarray:
+        # Doesn't require any Labels to run so can start immediately
+        if self.model is None:
+            self.model = self.train_model(dataset)
+        self.last_confidence = confidence
+        htl_mask = self.detect_outliers(dataset, indices_chosen)
+        return htl_mask
