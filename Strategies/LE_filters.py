@@ -93,6 +93,13 @@ class TeachingFilter(FilterStrategy):
         # Use entropy to find out how certain we are that we found the right one
         return entropy(softmax(results_norm, axis=1), axis=1)
 
+    def calc_threshold(self, learning_entropy):
+        # Define Threshold
+        std_entropy = np.std(learning_entropy)
+        mean_entropy = np.mean(learning_entropy)
+        threshold = mean_entropy + 2 * std_entropy
+        return threshold
+
     def __call__(self,
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
@@ -117,10 +124,7 @@ class TeachingFilter(FilterStrategy):
         # Calculate Learning Entropy
         entropies = np.array(self.probs)
         learning_entropy = self.learning_entropy(entropies)
-        # Define Threshold
-        std_entropy = np.std(learning_entropy)
-        mean_entropy = np.mean(learning_entropy)
-        threshold = mean_entropy + 2 * std_entropy
+        threshold = self.calc_threshold(learning_entropy)
         # Marks all (assumed) HTL samples in ENTIRE dataset
         absolute_mask = learning_entropy > threshold
         return absolute_mask[indices_chosen]
@@ -128,7 +132,7 @@ class TeachingFilter(FilterStrategy):
 
 class TeachingFilter_Smooth(TeachingFilter):
     '''
-    Codename: LE-Clean
+    Codename: LE-Smooth
     Idea: We track over multiple iterations a learning metric e.g. Entropy and how much it changes
     If it improved less over the iterations than most others then we assume HTL
     Assumption: If the sample didn't learn from all the ones that came before
@@ -173,3 +177,27 @@ class TeachingFilter_Smooth(TeachingFilter):
         results_norm = results / sum(range(smooth_matrix.shape[0]))
 
         return entropy(softmax(results_norm, axis=1), axis=1)
+
+
+class TeachingFilter_WOW(TeachingFilter):
+    '''
+    Codename: LE-WOW
+
+    Features:
+    - Extra Delayed Start
+    - Only consider the 500 samples with (currently) highest entropy when calculating Threshold (what we consider HTL)
+    '''
+
+    def __init__(self, **kwargs):
+        self.probs = []
+        self.current_iteration = 0
+        self.start_delay = 5
+
+    def calc_threshold(self, learning_entropy):
+        # Only use 500 most uncertain samples as those have probably higher concentration of HTL Samples
+        learning_entropy_wow = learning_entropy[np.argsort(-entropy(self.probs[-1], axis=1))[:500]]
+        # Define Threshold
+        std_entropy = np.std(learning_entropy_wow)
+        mean_entropy = np.mean(learning_entropy_wow)
+        threshold = mean_entropy + 2 * std_entropy
+        return threshold
