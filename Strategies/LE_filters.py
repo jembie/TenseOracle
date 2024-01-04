@@ -41,6 +41,7 @@ class TeachingFilter(FilterStrategy):
     def __init__(self, **kwargs):
         self.probs = []
         self.current_iteration = 0
+        self.start_delay = 3
 
     def moving_average(self, a, n=3, axis=2):
         """Simple Moving Average Formular"""
@@ -110,7 +111,7 @@ class TeachingFilter(FilterStrategy):
             self.probs.append(probabilities)
 
         # Skip first 3 iters as distributions still behave randomly
-        if len(self.probs) < 3:
+        if len(self.probs) < self.start_delay:
             return np.zeros_like(indices_chosen, dtype=bool)
 
         # Calculate Learning Entropy
@@ -123,3 +124,52 @@ class TeachingFilter(FilterStrategy):
         # Marks all (assumed) HTL samples in ENTIRE dataset
         absolute_mask = learning_entropy > threshold
         return absolute_mask[indices_chosen]
+
+
+class TeachingFilter_Smooth(TeachingFilter):
+    '''
+    Codename: LE-Clean
+    Idea: We track over multiple iterations a learning metric e.g. Entropy and how much it changes
+    If it improved less over the iterations than most others then we assume HTL
+    Assumption: If the sample didn't learn from all the ones that came before
+    then the others won't learn from it as well because they are too dissimilar
+    Features:
+    - Extra Delayed Start
+    - Use a integral based voting system
+        i.e. how much and in which direction has the class probability changed over iterations
+        instead of only asking in which direction
+        Advantage: Minor deviations from monotone growth/decrease get only minorly punished
+    '''
+
+    def __init__(self, **kwargs):
+        self.probs = []
+        self.current_iteration = 0
+        self.start_delay = 5
+
+    def learning_entropy(self, matrix):
+        '''
+        Assumption: if learning a sample 1 classes probability should increase with every step and all other should fall
+        We calculate how monotone (Note: Not how steep) a classes probability rises
+        Then we compare it to the behaviour of the other classes via softmax
+        Finally we apply entropy to see with which certainty we can find a rising class
+        if 0 -> 1 class rises monton all others fall monoton
+        if large either all fall, multiple rise, or just chaotic
+        Conclusion we only want samples that have a low entropy
+        as they should have similarities with previously sampled data as inticated by low learning entropy
+        (knowledge was gathered from previous samples that helped with this sample)
+        Therefore we might assume that this sample could help with the others too
+        High LearningEntropy might indicate that the sample is so different that the others didn't affect this one and vice versa
+        :param matrix:
+        :return:
+        '''
+        # Moving average to reduce random fluctuations
+        smooth_matrix = self.moving_average(matrix, n=3, axis=0)
+        # Calculate change over different distances
+        results = np.zeros(smooth_matrix.shape[1:])
+        for n in range(1, smooth_matrix.shape[0]):
+            r = (smooth_matrix[n:, :, :] - smooth_matrix[:-n, :, :])
+            results += np.sum(r, axis=0)
+        # normalize-ish Results
+        results_norm = results / sum(range(smooth_matrix.shape[0]))
+
+        return entropy(softmax(results_norm, axis=1), axis=1)
