@@ -2,7 +2,7 @@
   "dataset_path": "glue",
   "subset": "mnli",
   "task_class": "text_pair_classification",
-  "task_name": "xMNLI",
+  "task_name": "yMNLI",
   "input_text_1": "premise",
   "input_text_2": "hypothesis",
   "label_column": "label",

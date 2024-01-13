@@ -1,7 +1,7 @@
 {
   "dataset_path": "nid989/FNC-1",
   "task_class": "text_pair_classification",
-  "task_name": "xFNC1",
+  "task_name": "yFNC1",
   "input_text_1": "Headline",
   "input_text_2": "articleBody",
   "label_column": "Stance",

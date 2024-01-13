@@ -24,6 +24,7 @@ def main():
                                          filter_name=args.filter_strategy_name,
                                          config=config,
                                          args=args,
+                                         task_config=task_config,
                                          num_classes=num_classes)
 
     # Init Learner & Seed Set

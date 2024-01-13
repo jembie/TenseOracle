@@ -1,7 +1,7 @@
 {
   "dataset_path": "trec",
   "task_class": "text_classification",
-  "task_name": "xTREC-Coarse",
+  "task_name": "yTREC-Coarse",
   "input_text_column": "text",
   "label_column": "coarse_label",
   "test_set_name": "test"

@@ -1,7 +1,7 @@
 {
   "dataset_path": "dbpedia_14",
   "task_class": "text_pair_classification",
-  "task_name": "xDBPedia",
+  "task_name": "yDBPedia",
   "input_text_1": "title",
   "input_text_2": "content",
   "label_column": "label",

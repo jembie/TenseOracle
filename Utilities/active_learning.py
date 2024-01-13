@@ -40,9 +40,11 @@ class HTLOverseer(QueryStrategy):
     with and without those samples to find out whether our FilterStrategy only denied harmful ones.
     """
 
-    def __init__(self, filter_strategy: filters.FilterStrategy, query_strategy: QueryStrategy):
+    def __init__(self, filter_strategies: list[filters.FilterStrategy], query_strategy: QueryStrategy, cache_adr, seed, task_name):
         super().__init__()
-        self.filter_strategy = filter_strategy
+        self.filter_strategies = filter_strategies
+        self.outputpath = f"{cache_adr}/{task_name}_{seed}.npy"
+        self.masks = {filter: [] for filter in self.filter_strategies}
         self.query_strategy = query_strategy
         self.htl_tracker = []  # Here is where I'd put my HTL samples if I had any
         self.time_tracker = []
@@ -52,36 +54,35 @@ class HTLOverseer(QueryStrategy):
         self.iter_counter += 1
         unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(self.htl_tracker))
         chosen_samples, confidence = self.query_strategy.query(clf, _dataset, unlabeled_pool, indices_labeled, y, n=n)
-        if not self.filter_strategy:
-            # If no Filter Strategy in use just return samples as is
-            return chosen_samples
         start_time = time.time()
-        htl_mask = self.filter_strategy(indices_chosen=chosen_samples,
-                                        confidence=confidence,
-                                        indices_already_avoided=self.htl_tracker,
-                                        clf=clf,
-                                        dataset=_dataset,
-                                        indices_unlabeled=indices_unlabeled,
-                                        indices_labeled=indices_labeled,
-                                        y=y,
-                                        n=n,
-                                        iteration=self.iter_counter)
+        for filter in self.filter_strategies:
+            htl_mask = filter(indices_chosen=chosen_samples,
+                                            confidence=confidence,
+                                            indices_already_avoided=self.htl_tracker,
+                                            clf=clf,
+                                            dataset=_dataset,
+                                            indices_unlabeled=indices_unlabeled,
+                                            indices_labeled=indices_labeled,
+                                            y=y,
+                                            n=n,
+                                            iteration=self.iter_counter)
+            self.masks[filter].append(htl_mask)
         duration = time.time() - start_time
+        masks = np.array([np.concatenate(self.masks[filter]) for filter in self.filter_strategies])
+        np.save(self.outputpath, masks, allow_pickle=True)
         self.time_tracker.append(duration)
-        # Add HTL samples to HTL tracker
-        self.htl_tracker += list(chosen_samples[htl_mask])
 
-        return chosen_samples[~htl_mask]
+        return chosen_samples
 
     def __repr__(self):
-        return f"HTLOverseer({str(self.filter_strategy)}, {str(self.query_strategy)})"
+        return f"HTLOverseer({str(self.filter_strategies)}, {str(self.query_strategy)})"
 
     @property
     def indices_htl(self) -> np.ndarray:
         return np.array(list(set(self.htl_tracker)))
 
 
-def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -> HTLOverseer:
+def load_query_strategy(strategy_name, filter_name, config, args, task_config, num_classes) -> HTLOverseer:
     """
     Loads a QueryStrategy (also called AcquisitionFunction)
     and Wraps a filter around it that is supposed to
@@ -101,11 +102,19 @@ def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -
         "shared_cache": config["SHARED_CACHE_ADR"],
         "seed": args.random_seed,
     }
-    if filter_name != "None":
-        filter_strategy = getattr(Strategies, filter_name)(**kwargs)
-    else:
-        filter_strategy = None
-    query_strategy = HTLOverseer(filter_strategy=filter_strategy, query_strategy=query_strategy)
+    filter_names = ["LoserFilter_SSL_Variety", "LoserFilter_Plain",
+                    "LoserFilter_Optimized_Pseudo_Labels", "AutoFilter_Chen_Like", "AutoFilter_LSTM",
+                    "AutoFilter_LSTM_SIMPLE", "SingleStepEntropy", "SingleStepEntropy_SimplePseudo",
+                    "TeachingFilter", "TeachingFilter_Smooth", "TeachingFilter_WOW"]
+    filter_strategies = []
+    for filter_name in filter_names:
+        filter_strategies.append(getattr(Strategies, filter_name)(**kwargs))
+
+    query_strategy = HTLOverseer(filter_strategies=filter_strategies,
+                                 query_strategy=query_strategy,
+                                 cache_adr=config["SHARED_CACHE_ADR"],
+                                 seed=args.random_seed,
+                                 task_name=task_config["task_name"].replace(" ", "_"))
 
     return query_strategy
 

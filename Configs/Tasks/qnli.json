@@ -2,7 +2,7 @@
   "dataset_path": "glue",
   "subset": "qnli",
   "task_class": "text_pair_classification",
-  "task_name": "xQNLI",
+  "task_name": "yQNLI",
   "input_text_1": "question",
   "input_text_2": "sentence",
   "label_column": "label",
