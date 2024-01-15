@@ -1,7 +1,7 @@
 {
   "dataset_path": "ag_news",
   "task_class": "text_classification",
-  "task_name": "xAG News",
+  "task_name": "zAG News",
   "input_text_column": "text",
   "label_column": "label",
   "test_set_name": "test"

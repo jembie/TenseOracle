@@ -1,7 +1,7 @@
 {
   "dataset_path": "PolyAI/banking77",
   "task_class": "text_classification",
-  "task_name": "xBanking77",
+  "task_name": "zBanking77",
   "input_text_column": "text",
   "label_column": "label",
   "test_set_name": "test"

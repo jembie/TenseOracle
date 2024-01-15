@@ -1,7 +1,7 @@
 {
   "dataset_path": "yelp_review_full",
   "task_class": "text_classification",
-  "task_name": "xYELP",
+  "task_name": "zYELP",
   "input_text_column": "text",
   "label_column": "label",
   "test_set_name": "test"

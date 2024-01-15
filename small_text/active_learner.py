@@ -111,9 +111,10 @@ class PoolBasedActiveLearner(AbstractPoolBasedActiveLearner):
 
         self.y = None
         self.indices_queried = None
+        self.callback = None
 
     def initialize_data(self, indices_initial, y_initial, indices_ignored=None,
-                        indices_validation=None, retrain=True):
+                        indices_validation=None, retrain=True, callback=None):
         """(Re-)Initializes the current labeled pool.
 
         This is required once before the first `query()` call, and whenever the labeled pool
@@ -139,6 +140,7 @@ class PoolBasedActiveLearner(AbstractPoolBasedActiveLearner):
         self.indices_labeled = indices_initial
         self._index_to_position = self._build_index_to_position_dict()
         self.y = y_initial
+        self.callback = callback
 
         if isinstance(self.y, csr_matrix):
             self.multi_label = True
@@ -385,6 +387,8 @@ class PoolBasedActiveLearner(AbstractPoolBasedActiveLearner):
             if hasattr(self, '_clf'):
                 del self._clf
             self._clf = self._clf_factory.new()
+            if self.callback and self._clf.callbacks == []:
+                self._clf.callbacks.append(self.callback)
 
         dataset = self.dataset[self.indices_labeled].clone()
         dataset.y = self.y

@@ -1,3 +1,4 @@
+import small_text
 from Utilities.general import set_random_seed
 from Utilities.comet import CometExperiment
 import numpy as np
@@ -6,6 +7,8 @@ import copy
 from tqdm.auto import tqdm
 import deepsig
 from sklearn.metrics import f1_score
+from Utilities.general import SmallTextCartographer
+from Strategies.dsm_filters import calc_probs
 
 
 def evaluate(active_learner, test):
@@ -89,6 +92,56 @@ def compare_datasets(active_learner,
     return results
 
 
+def evaluate_dataset(active_learner: small_text.PoolBasedActiveLearner,
+                     train,
+                     test,
+                     indices_labeled,
+                     indices_unlabeled,
+                     indices_htl,
+                     iterations,
+                     random_seed,
+                     ) -> (list, SmallTextCartographer):
+    """
+    Combines Labeled, found HTL, and unlabeled data into 3 variants.
+    Labeled Data, Labeled Data with HTL Samples,
+    Labeled Data with randomly chosen replacements for the HTL Samples.
+    Goal: Finding out whether the HTL samples indeed decrease Performance
+    They hurt performance if the Labeled data performs worse than the labeled data + HTL dataset
+    Low Bar: HTL samples are low value i.e. Labeled Data + Random Replacements
+    leads to better performance than Labeled Data + HTL Samples
+    :param active_learner:
+    :param train:
+    :param test:
+    :param indices_labeled:
+    :param indices_unlabeled:
+    :param indices_htl:
+    :param iterations:
+    :param random_seed:
+    :return:
+    """
+    results = {}
+
+    indices_labeled_backup = copy.deepcopy(indices_labeled)
+
+    results = []
+    ds = train[indices_labeled_backup].clone()
+    ds.y = train.y[indices_labeled_backup].astype(np.int64)
+    cartographer = SmallTextCartographer(dataset=ds, outputs_to_probabilities=calc_probs)
+    for i in tqdm(range(iterations)):
+        # Bring in diversity by setting diff seed each time
+        set_random_seed(random_seed + i)
+        # Shuffle Dataset each time to get better evaluation
+        indices_labeled_ = copy.copy(indices_labeled_backup).astype(np.int64)  # make copy to not shuffle original
+        np.random.shuffle(indices_labeled_)
+
+        y_initial = train.y[indices_labeled_].astype(np.int64)
+        active_learner.initialize_data(indices_labeled_, y_initial, retrain=True, callback=cartographer)
+        r = evaluate(active_learner, test)
+        results.append(r)
+
+    return results, cartographer
+
+
 def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
                            args,
                            config,
@@ -107,10 +160,10 @@ def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
     total_budget = config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
     unused_budget = total_budget - len(indices_labeled)
     # We assume that budget was only lost due to HTL avoidance nothing else
-    assert unused_budget == len(indices_htl) or (args.use_up_entire_budget and unused_budget==0)
+    assert unused_budget == 0
 
     print("Start Queried DS Evaluation")
-    results = compare_datasets(active_learner=active_learner,
+    (results, cartographer) = evaluate_dataset(active_learner=active_learner,
                                train=train,
                                test=test,
                                indices_labeled=indices_labeled,
@@ -119,26 +172,26 @@ def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
                                iterations=config["SET_EVAL_ITERATIONS"],
                                random_seed=args.random_seed)
 
-    for experiment_name in results.keys():
-        experiment.log_results(results[experiment_name], experiment_name)
+
+    experiment.log_results(results, "f1s")
+
+    cartographer: SmallTextCartographer = cartographer
+    experiment.log_results(cartographer.correctness, "correctness")
+    experiment.log_results(cartographer.confidence, "confidence")
+    experiment.log_results(cartographer.variability, "variability")
+    experiment.log_results(cartographer.gold_labels_probabilities, "gold_probs")
+
 
     # Collect all Statistics
-    median_no_htl = np.median(np.array(results["no_htl"]))
-    median_with_htl = np.median(np.array(results["htl"]))
-    median_replacement = np.median(np.array(results["random"]))
+    mean = np.mean(np.array(results))
 
     final_results = {
-        "avgF1 (No HTL)": sum(results["no_htl"]) / len(results["no_htl"]),
-        "avgF1 (With HTL)": sum(results["htl"]) / len(results["htl"]),
-        "avgF1 (random replacement)": sum(results["random"]) / len(results["random"]),
-        "medF1 (No HTL)": median_no_htl,
-        "medF1 (With HTL)": median_with_htl,
-        "medF1 (random replacement)": median_replacement,
-        "HTL Count": len(indices_htl),
-        "ASO-Sig[1]": deepsig.aso(results["no_htl"], results["htl"], seed=args.random_seed),
-        "ASO-Sig[2]": deepsig.aso(results["random"], results["htl"], seed=args.random_seed),
-        "HTL_harms_median": median_no_htl - median_with_htl,
-        "HTL_low_val_median": median_replacement - median_with_htl
+        "mean_f1": mean,
+        "Avoided Samples Count": len(indices_htl),
+        "mean correctness": np.mean(cartographer.correctness),
+        "mean confidence": np.mean(cartographer.confidence),
+        "mean variability": np.mean(cartographer.variability),
+        "THTL Count": np.sum(cartographer.correctness < 0.3),
     }
 
     # TODO Commit all results to Comet for later in depth eval

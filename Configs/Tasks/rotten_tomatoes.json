@@ -1,7 +1,7 @@
 {
   "dataset_path": "rotten_tomatoes",
   "task_class": "text_classification",
-  "task_name": "xRotten Tomatoes",
+  "task_name": "zRotten Tomatoes",
   "input_text_column": "text",
   "label_column": "label",
   "test_set_name": "test"
