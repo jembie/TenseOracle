@@ -54,6 +54,7 @@ class HTLOverseer(QueryStrategy):
         chosen_samples, confidence = self.query_strategy.query(clf, _dataset, unlabeled_pool, indices_labeled, y, n=n)
         if not self.filter_strategy:
             # If no Filter Strategy in use just return samples as is
+            self.time_tracker.append(0)
             return chosen_samples
         start_time = time.time()
         htl_mask = self.filter_strategy(indices_chosen=chosen_samples,
