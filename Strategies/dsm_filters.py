@@ -51,6 +51,8 @@ class LoserFilter_SSL_Variety(FilterStrategy):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,
@@ -61,7 +63,7 @@ class LoserFilter_SSL_Variety(FilterStrategy):
         if self.current_iteration < iteration:
             # Track Predictions over Iteration for Pseudo Labels Later on
             self.current_iteration = iteration
-            probabilities = clf.predict_proba(dataset)
+            probabilities = probas  # clf.predict_proba(dataset)
             self.predictions_over_time.append(probabilities)
 
         if len(self.predictions_over_time) < 6:
@@ -144,6 +146,8 @@ class LoserFilter_Plain(FilterStrategy):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,
@@ -151,10 +155,11 @@ class LoserFilter_Plain(FilterStrategy):
                  y: np.ndarray,
                  n=10,
                  iteration=0) -> np.ndarray:
+        # only one prediction per iteration (matters only when forced batchsize)
         if self.current_iteration < iteration:
             # Track Predictions over Iteration for Pseudo Labels Later on
             self.current_iteration = iteration
-            probabilities = clf.predict_proba(dataset)
+            probabilities = probas  # clf.predict_proba(dataset)
             self.predictions_over_time.append(probabilities)
         if len(self.predictions_over_time) < 5:
             # Do Nothing In Early Epochs because not ready
@@ -266,6 +271,8 @@ class LoserFilter_Optimized_Pseudo_Labels(FilterStrategy):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,
@@ -276,7 +283,7 @@ class LoserFilter_Optimized_Pseudo_Labels(FilterStrategy):
         if self.current_iteration < iteration:
             # Track Predictions over Iteration for Pseudo Labels Later on
             self.current_iteration = iteration
-            probabilities = clf.predict_proba(dataset)
+            probabilities = probas  # clf.predict_proba(dataset)
             self.predictions_over_time.append(probabilities)
 
         # Delay Start to avoid working with messy Pseudo Labels

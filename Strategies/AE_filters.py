@@ -254,6 +254,8 @@ class AutoFilter_Chen_Like(FilterStrategy):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,
@@ -270,7 +272,7 @@ class AutoFilter_Chen_Like(FilterStrategy):
         # Only need to calculate outliers scores once
         if self.outlier_scores is None:
             # Embed data (we try to find outliers with weird embeddings)
-            embeddings = clf.embed(dataset, embedding_method="cls")
+            #embeddings = clf.embed(dataset, embedding_method="cls")
 
             # Train Autoencoders
             ensemble = self.train_ensemble(embeddings)
@@ -423,6 +425,8 @@ class AutoFilter_LSTM(FilterStrategy):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,
@@ -430,7 +434,7 @@ class AutoFilter_LSTM(FilterStrategy):
                  y: np.ndarray,
                  n=10,
                  iteration=0) -> np.ndarray:
-        predictions = clf.predict_proba(dataset)
+        predictions = probas  # clf.predict_proba(dataset)
         self.predictions.append(predictions)
         self.last_confidence = confidence
 
@@ -525,6 +529,8 @@ class AutoFilter_LSTM_SIMPLE(AutoFilter_LSTM):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,

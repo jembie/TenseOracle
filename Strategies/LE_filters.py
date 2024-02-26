@@ -104,6 +104,8 @@ class TeachingFilter(FilterStrategy):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,
@@ -114,7 +116,7 @@ class TeachingFilter(FilterStrategy):
         if self.current_iteration < iteration:
             # Track class distribution for each sample over iterations
             self.current_iteration = iteration
-            probabilities = clf.predict_proba(dataset)
+            probabilities = probas  # clf.predict_proba(dataset)
             self.probs.append(probabilities)
 
         # Skip first 3 iters as distributions still behave randomly
