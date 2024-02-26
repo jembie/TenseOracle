@@ -82,6 +82,8 @@ class SingleStepEntropy(FilterStrategy):
                  indices_chosen: np.ndarray,
                  indices_already_avoided: list,
                  confidence: np.ndarray,
+                 embeddings: np.ndarray,
+                 probas: np.ndarray,
                  clf: Classifier,
                  dataset: Dataset,
                  indices_unlabeled: np.ndarray,
@@ -92,7 +94,7 @@ class SingleStepEntropy(FilterStrategy):
         # Track class distribution for each sample over iterations
         if self.current_iteration < iteration:
             self.current_iteration = iteration
-            probabilities = clf.predict_proba(dataset)
+            probabilities = probas  # clf.predict_proba(dataset)
             self.predictions_over_time.append(probabilities)
 
         # Delay Start by 5 iterations as we don't trust the first 2
@@ -110,11 +112,13 @@ class SingleStepEntropy(FilterStrategy):
         validation_set = dataset[validation_indices].clone()
         validation_set.y = np.zeros_like(validation_indices)
         # Test Current Model to set Baseline i.e. what is the avg. entr. of the current model on the val set
+        #proba_ = probas[validation_indices]
         proba = clf.predict_proba(validation_set)
+        #assert np.all(np.round(proba, decimals=5)==np.round(proba_, decimals=5))
         entropies = entropy(proba, axis=1)
         entropy_original = np.average(entropies)
 
-        REPETITIONS = 5
+        REPETITIONS = 3
         new_entropies = []
         # Train copies of the current model for a single step on a single sample
         # If Average Entropy increases then we consider it HTL

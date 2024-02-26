@@ -7,6 +7,7 @@ from sklearn.preprocessing import normalize
 from small_text.base import check_optional_dependency
 from small_text.query_strategies.exceptions import EmptyPoolException, PoolExhaustedException
 from small_text.utils.context import build_pbar_context
+#from small_text.integrations.transformers.classifiers import TransformerBasedClassification
 
 
 class QueryStrategy(ABC):
@@ -75,14 +76,14 @@ class ConfidenceBasedQueryStrategy(QueryStrategy):
     def query(self, clf, dataset, indices_unlabeled, indices_labeled, y, n=10):
         self._validate_query_input(indices_unlabeled, n)
 
-        confidence = self.score(clf, dataset, indices_unlabeled, indices_labeled, y)
+        confidence, proba, embeddings = self.score(clf, dataset, indices_unlabeled, indices_labeled, y)
 
         if len(indices_unlabeled) == n:
             return np.array(indices_unlabeled)
 
         indices_partitioned = np.argpartition(confidence[indices_unlabeled], n)[:n]
         # return confidence as well to save time
-        return np.array([indices_unlabeled[i] for i in indices_partitioned]), confidence
+        return np.array([indices_unlabeled[i] for i in indices_partitioned]), confidence, proba, embeddings
 
     def score(self, clf, dataset, indices_unlabeled, indices_labeled, y):
         """Assigns a confidence score to each instance.
@@ -108,12 +109,12 @@ class ConfidenceBasedQueryStrategy(QueryStrategy):
             subsequent methods do not need to differentiate maximization/minimization.
         """
 
-        confidence = self.get_confidence(clf, dataset, indices_unlabeled, indices_labeled, y)
+        confidence, proba, embeddings = self.get_confidence(clf, dataset, indices_unlabeled, indices_labeled, y)
         self.scores_ = confidence
         if not self.lower_is_better:
             confidence = -confidence
 
-        return confidence
+        return confidence, proba, embeddings
 
     @abstractmethod
     def get_confidence(self, clf, dataset, indices_unlabeled, indices_labeled, y):
@@ -184,8 +185,9 @@ class PredictionEntropy(ConfidenceBasedQueryStrategy):
         super().__init__(lower_is_better=False)
 
     def get_confidence(self, clf, dataset, _indices_unlabeled, _indices_labeled, _y):
-        proba = clf.predict_proba(dataset)
-        return np.apply_along_axis(lambda x: entropy(x), 1, proba)
+        #proba_ = clf.predict_proba(dataset)  # Average Dur 88s
+        embeddings, proba = clf.embed(dataset, return_proba=True, embedding_method="cls")  # average dur 84s
+        return np.apply_along_axis(lambda x: entropy(x), 1, proba), proba, embeddings
 
     def __str__(self):
         return 'PredictionEntropy()'

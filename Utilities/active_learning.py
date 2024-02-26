@@ -51,13 +51,15 @@ class HTLOverseer(QueryStrategy):
     def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10):
         self.iter_counter += 1
         unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(self.htl_tracker))
-        chosen_samples, confidence = self.query_strategy.query(clf, _dataset, unlabeled_pool, indices_labeled, y, n=n)
+        chosen_samples, confidence, proba, embeddings = self.query_strategy.query(clf, _dataset, unlabeled_pool, indices_labeled, y, n=n)
         if not self.filter_strategy:
             # If no Filter Strategy in use just return samples as is
             return chosen_samples
         start_time = time.time()
         htl_mask = self.filter_strategy(indices_chosen=chosen_samples,
                                         confidence=confidence,
+                                        probas=proba,
+                                        embeddings=embeddings,
                                         indices_already_avoided=self.htl_tracker,
                                         clf=clf,
                                         dataset=_dataset,
