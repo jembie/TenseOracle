@@ -18,8 +18,10 @@ def main():
     (train, test) = load_dataset_from_config(task_config, config=config, args=args)
 
     num_classes = len(set(train.y).union(test.y))
+    # Load Factory for models such that a new model can be trained each iteration
     clf_factory = load_model(config, num_classes)
 
+    # Load Acquisition Function and Wrap Filter around
     query_strategy = load_query_strategy(strategy_name=args.strategy_name,
                                          filter_name=args.filter_strategy_name,
                                          config=config,
@@ -39,10 +41,12 @@ def main():
         indices_labeled=indices_labeled,
         experiment=experiment,
     )
-    indices_htl = active_learner.query_strategy.indices_htl
+    # Extract all Identified Samples from Filter
+    indices_htl = active_learner.query_strategy.indices_htl  # htl - Hard To Learn (i.e. Outlier)
     indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)
     indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
 
+    # Evaluate whether avoided samples indeed hurt performance
     set_performance = assess_dataset_quality(
         active_learner=active_learner,
         train=train,
@@ -55,11 +59,11 @@ def main():
         experiment=experiment,
     )
 
+    # Log Results to Comet
     metrics_to_log = {
         "avg_duration": sum(tt := active_learner.query_strategy.time_tracker)/len(tt),
         **set_performance
     }
-
     experiment.log_metrics(metrics_to_log)
     experiment.log_results(np.array(active_learner.query_strategy.time_tracker), "durations")
 
@@ -67,11 +71,14 @@ def main():
 
 
 if __name__ == '__main__':
+    # Read Arguments
     args = parse_args()
     config = parse_config(args)
     task_config = parse_task_config(args)
+    # Setup Comet if available to logg results
     experiment = CometExperiment(args, config, task_config)
 
+    # Check for GPU - Crash if not available (except if --gpu_optional)
     if torch.cuda.is_available():
         experiment.log_parameters({"GPU": True})
         cuda = [torch.cuda.device(i) for i in range(torch.cuda.device_count())]

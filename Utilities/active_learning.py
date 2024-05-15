@@ -107,6 +107,7 @@ def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -
         filter_strategy = getattr(Strategies, filter_name)(**kwargs)
     else:
         filter_strategy = None
+    # Add Filter to Query Strategy
     query_strategy = HTLOverseer(filter_strategy=filter_strategy, query_strategy=query_strategy)
 
     return query_strategy
