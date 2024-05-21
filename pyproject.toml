@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "tenseoracle"
+version = "0.1.0"
+description = ""
+authors = ["jembie <75253705+jembie@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+comet-ml = "^3.42.0"
+transformers = {extras = ["torch"], version = "^4.41.0"}
+datasets = "^2.19.1"
+accelerate = "^0.30.1"
+evaluate = "^0.4.2"
+scikit-learn = "^1.4.2"
+numpy = "^1.26.4"
+torch = "^2.3.0"
+deepsig = "^1.2.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
