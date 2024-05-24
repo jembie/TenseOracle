@@ -6,7 +6,7 @@ authors = ["jembie <75253705+jembie@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 comet-ml = "^3.42.0"
 transformers = {extras = ["torch"], version = "^4.41.0"}
 datasets = "^2.19.1"
