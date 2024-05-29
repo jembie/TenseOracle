@@ -1,6 +1,5 @@
 class Metric(object):
-    """Represents an arbitrary metric.
-    """
+    """Represents an arbitrary metric."""
 
     def __init__(self, name, dtype=float, lower_is_better=True):
         """
@@ -19,5 +18,7 @@ class Metric(object):
         self.lower_is_better = lower_is_better
 
     def __repr__(self):
-        return f'Metric(\'{self.name}\', dtype={self.dtype.__name__}, ' \
-               f'lower_is_better={self.lower_is_better})'
+        return (
+            f"Metric('{self.name}', dtype={self.dtype.__name__}, "
+            f"lower_is_better={self.lower_is_better})"
+        )

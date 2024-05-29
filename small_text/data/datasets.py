@@ -16,27 +16,35 @@ from small_text.utils.labels import get_flattened_unique_labels
 
 def check_size(expected_num_samples, num_samples):
     if num_samples != expected_num_samples:
-        raise ValueError(f'Size mismatch: expected {expected_num_samples} samples, '
-                         f'encountered {num_samples} samples')
+        raise ValueError(
+            f"Size mismatch: expected {expected_num_samples} samples, "
+            f"encountered {num_samples} samples"
+        )
 
 
 def check_dataset_and_labels(x, y):
     len_x = list_length(x)
     if len_x != y.shape[0]:
-        if hasattr(x, 'shape'):
-            raise ValueError(f'Feature and label dimensions do not match: '
-                             f'x.shape = {x.shape}, y.shape= {y.shape} ### {type(x)} / {type(y)}')
+        if hasattr(x, "shape"):
+            raise ValueError(
+                f"Feature and label dimensions do not match: "
+                f"x.shape = {x.shape}, y.shape= {y.shape} ### {type(x)} / {type(y)}"
+            )
         else:
-            raise ValueError(f'Feature and label dimensions do not match: '
-                             f'x = ({len_x},), y.shape= ({y.shape[0]},) ### {type(x)} / {type(y)}')
+            raise ValueError(
+                f"Feature and label dimensions do not match: "
+                f"x = ({len_x},), y.shape= ({y.shape[0]},) ### {type(x)} / {type(y)}"
+            )
 
 
 def check_target_labels(target_labels):
     if target_labels is None:
-        warnings.warn('Passing target_labels=None is discouraged as it can lead to '
-                      'unintended results in combination with indexing and cloning. '
-                      'Moreover, explicit target labels might be required in the '
-                      'next major version.')
+        warnings.warn(
+            "Passing target_labels=None is discouraged as it can lead to "
+            "unintended results in combination with indexing and cloning. "
+            "Moreover, explicit target labels might be required in the "
+            "next major version."
+        )
 
 
 def get_updated_target_labels(is_multi_label, y, target_labels):
@@ -166,7 +174,7 @@ class SklearnDatasetView(DatasetView):
 
     @x.setter
     def x(self, x):
-        raise UnsupportedOperationException('Cannot set x on a DatasetView')
+        raise UnsupportedOperationException("Cannot set x on a DatasetView")
 
     @property
     def y(self):
@@ -178,7 +186,7 @@ class SklearnDatasetView(DatasetView):
 
     @y.setter
     def y(self, y):
-        raise UnsupportedOperationException('Cannot set y on a DatasetView')
+        raise UnsupportedOperationException("Cannot set y on a DatasetView")
 
     @property
     def is_multi_label(self):
@@ -190,7 +198,7 @@ class SklearnDatasetView(DatasetView):
 
     @target_labels.setter
     def target_labels(self, target_labels):
-        raise UnsupportedOperationException('Cannot set target_labels on a DatasetView')
+        raise UnsupportedOperationException("Cannot set target_labels on a DatasetView")
 
     def clone(self):
         if isinstance(self.x, csr_matrix):
@@ -204,7 +212,7 @@ class SklearnDatasetView(DatasetView):
             y = np.copy(self.y)
 
         dataset = self
-        while hasattr(dataset, 'dataset'):
+        while hasattr(dataset, "dataset"):
             dataset = dataset.dataset
 
         if dataset.track_target_labels:
@@ -212,9 +220,7 @@ class SklearnDatasetView(DatasetView):
         else:
             target_labels = np.copy(dataset._target_labels)
 
-        return SklearnDataset(x,
-                              y,
-                              target_labels=target_labels)
+        return SklearnDataset(x, y, target_labels=target_labels)
 
     def __getitem__(self, item):
         return self.obj_class(self, item)
@@ -249,8 +255,9 @@ class TextDatasetView(DatasetView):
         if isinstance(self.selection, (int, np.integer)):
             return [self.dataset.x[self.selection]]
 
-        is_slice = isinstance(self.selection, slice) \
-            or isinstance(self.selection, np.lib.index_tricks.IndexExpression)
+        is_slice = isinstance(self.selection, slice) or isinstance(
+            self.selection, np.lib.index_tricks.IndexExpression
+        )
         is_list = isinstance(self.selection, list)
 
         if is_slice or is_list:
@@ -262,7 +269,7 @@ class TextDatasetView(DatasetView):
 
     @x.setter
     def x(self, x):
-        raise UnsupportedOperationException('Cannot set x on a DatasetView')
+        raise UnsupportedOperationException("Cannot set x on a DatasetView")
 
     @property
     def y(self):
@@ -274,7 +281,7 @@ class TextDatasetView(DatasetView):
 
     @y.setter
     def y(self, y):
-        raise UnsupportedOperationException('Cannot set y on a DatasetView')
+        raise UnsupportedOperationException("Cannot set y on a DatasetView")
 
     @property
     def is_multi_label(self):
@@ -286,7 +293,7 @@ class TextDatasetView(DatasetView):
 
     @target_labels.setter
     def target_labels(self, target_labels):
-        raise UnsupportedOperationException('Cannot set target_labels on a DatasetView')
+        raise UnsupportedOperationException("Cannot set target_labels on a DatasetView")
 
     def clone(self):
         if isinstance(self.x, csr_matrix):
@@ -300,7 +307,7 @@ class TextDatasetView(DatasetView):
             y = np.copy(self.y)
 
         dataset = self
-        while hasattr(dataset, 'dataset'):
+        while hasattr(dataset, "dataset"):
             dataset = dataset.dataset
 
         if dataset.track_target_labels:
@@ -308,9 +315,7 @@ class TextDatasetView(DatasetView):
         else:
             target_labels = np.copy(dataset._target_labels)
 
-        return TextDataset(x,
-                           y,
-                           target_labels=target_labels)
+        return TextDataset(x, y, target_labels=target_labels)
 
     def __getitem__(self, item):
         return self.obj_class(self, item)
@@ -333,7 +338,6 @@ def select(dataset, selection):
 
 
 class _InferLabelsMixin(object):
-
     def _infer_target_labels(self):
         if self.__len__() == 0:
             self.target_labels = np.array([0])
@@ -341,7 +345,7 @@ class _InferLabelsMixin(object):
             unique_labels = np.unique(self._get_flattened_labels())
             if unique_labels.shape[0] > 0:
                 max_label_id = unique_labels.max()
-                self.target_labels = np.arange(max_label_id+1)
+                self.target_labels = np.arange(max_label_id + 1)
             else:
                 self.target_labels = np.array([0])
 
@@ -353,8 +357,7 @@ class _InferLabelsMixin(object):
 
 
 class SklearnDataset(_InferLabelsMixin, Dataset):
-    """A dataset representations which is usable in combination with scikit-learn classifiers.
-    """
+    """A dataset representations which is usable in combination with scikit-learn classifiers."""
 
     def __init__(self, x, y, target_labels=None):
         """
@@ -407,15 +410,19 @@ class SklearnDataset(_InferLabelsMixin, Dataset):
         self._y = y
 
         if self.track_target_labels:
-            self.target_labels = get_updated_target_labels(self.is_multi_label, y, self.target_labels)
+            self.target_labels = get_updated_target_labels(
+                self.is_multi_label, y, self.target_labels
+            )
         else:
             max_label_id = np.max(y)
             max_target_labels_id = self.target_labels.max()
             if max_label_id > max_target_labels_id:
-                raise ValueError(f'Error while assigning new labels to dataset: '
-                                 f'Encountered label with id {max_label_id} which is outside of '
-                                 f'the configured set of target labels (whose maximum label is '
-                                 f'is {max_target_labels_id}) [track_target_labels=False]')
+                raise ValueError(
+                    f"Error while assigning new labels to dataset: "
+                    f"Encountered label with id {max_label_id} which is outside of "
+                    f"the configured set of target labels (whose maximum label is "
+                    f"is {max_target_labels_id}) [track_target_labels=False]"
+                )
 
     @property
     def is_multi_label(self):
@@ -436,8 +443,10 @@ class SklearnDataset(_InferLabelsMixin, Dataset):
     def target_labels(self, target_labels):
         encountered_labels = get_flattened_unique_labels(self)
         if np.setdiff1d(encountered_labels, target_labels).shape[0] > 0:
-            raise ValueError('Cannot remove existing labels from target_labels as long as they '
-                             'still exists in the data. Create a new dataset instead.')
+            raise ValueError(
+                "Cannot remove existing labels from target_labels as long as they "
+                "still exists in the data. Create a new dataset instead."
+            )
         self._target_labels = target_labels
 
     def clone(self):
@@ -510,8 +519,7 @@ class SklearnDataset(_InferLabelsMixin, Dataset):
 
 
 class TextDataset(_InferLabelsMixin, Dataset):
-    """A dataset representation consisting of raw text data.
-    """
+    """A dataset representation consisting of raw text data."""
 
     def __init__(self, x, y, target_labels=None):
         """
@@ -567,15 +575,19 @@ class TextDataset(_InferLabelsMixin, Dataset):
         self._y = y
 
         if self.track_target_labels:
-            self.target_labels = get_updated_target_labels(self.is_multi_label, y, self.target_labels)
+            self.target_labels = get_updated_target_labels(
+                self.is_multi_label, y, self.target_labels
+            )
         else:
             max_label_id = np.max(y)
             max_target_labels_id = self.target_labels.max()
             if max_label_id > max_target_labels_id:
-                raise ValueError(f'Error while assigning new labels to dataset: '
-                                 f'Encountered label with id {max_label_id} which is outside of '
-                                 f'the configured set of target labels (whose maximum label is '
-                                 f'is {max_target_labels_id}) [track_target_labels=False]')
+                raise ValueError(
+                    f"Error while assigning new labels to dataset: "
+                    f"Encountered label with id {max_label_id} which is outside of "
+                    f"the configured set of target labels (whose maximum label is "
+                    f"is {max_target_labels_id}) [track_target_labels=False]"
+                )
 
     @property
     def is_multi_label(self):
@@ -596,8 +608,10 @@ class TextDataset(_InferLabelsMixin, Dataset):
     def target_labels(self, target_labels):
         encountered_labels = get_flattened_unique_labels(self)
         if np.setdiff1d(encountered_labels, target_labels).shape[0] > 0:
-            raise ValueError('Cannot remove existing labels from target_labels as long as they '
-                             'still exists in the data. Create a new dataset instead.')
+            raise ValueError(
+                "Cannot remove existing labels from target_labels as long as they "
+                "still exists in the data. Create a new dataset instead."
+            )
         self._target_labels = target_labels
 
     def clone(self):
@@ -657,7 +671,9 @@ class TextDataset(_InferLabelsMixin, Dataset):
         return len(self._x)
 
 
-def split_data(train_set, y=None, strategy='random', validation_set_size=0.1, return_indices=False):
+def split_data(
+    train_set, y=None, strategy="random", validation_set_size=0.1, return_indices=False
+):
     """Splits the given set `train_set` into two subsets (`sub_train` and `sub_valid`) according to
     a specified strategy.
 
@@ -687,25 +703,31 @@ def split_data(train_set, y=None, strategy='random', validation_set_size=0.1, re
     handle the multi-label case. This might change in the future.
     """
     if validation_set_size == 0 or validation_set_size >= 1.0:
-        raise ValueError('Invalid value encountered for "validation_set_size". '
-                         'Must be within the interval (0.0, 1.0).')
+        raise ValueError(
+            'Invalid value encountered for "validation_set_size". '
+            "Must be within the interval (0.0, 1.0)."
+        )
 
-    train_len = int(len(train_set) * (1-validation_set_size))
+    train_len = int(len(train_set) * (1 - validation_set_size))
 
-    if strategy == 'random':
+    if strategy == "random":
         indices = np.random.permutation(len(train_set))
         indices_train = indices[:train_len]
         indices_valid = indices[train_len:]
-    elif strategy == 'balanced':
-        indices_valid = balanced_sampling(y, n_samples=len(train_set)-train_len)
+    elif strategy == "balanced":
+        indices_valid = balanced_sampling(y, n_samples=len(train_set) - train_len)
         indices_train = list(range(len(train_set)))
-        indices_train = np.array([i for i in indices_train if i not in set(indices_valid)])
-    elif strategy == 'stratified':
-        indices_valid = stratified_sampling(y, n_samples=len(train_set)-train_len)
+        indices_train = np.array(
+            [i for i in indices_train if i not in set(indices_valid)]
+        )
+    elif strategy == "stratified":
+        indices_valid = stratified_sampling(y, n_samples=len(train_set) - train_len)
         indices_train = list(range(len(train_set)))
-        indices_train = np.array([i for i in indices_train if i not in set(indices_valid)])
+        indices_train = np.array(
+            [i for i in indices_train if i not in set(indices_valid)]
+        )
     else:
-        raise ValueError('Invalid strategy: ' + strategy)
+        raise ValueError("Invalid strategy: " + strategy)
 
     if return_indices:
         return indices_train, indices_valid

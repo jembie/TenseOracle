@@ -11,13 +11,11 @@ from small_text.exceptions import UnsupportedOperationException
 from small_text.utils.classification import (
     empty_result,
     _multi_label_list_to_multi_hot,
-    prediction_result
+    prediction_result,
 )
 from small_text.utils.context import build_pbar_context
 from small_text.utils.labels import csr_to_list
-from small_text.integrations.transformers.classifiers.base import (
-    ModelLoadingStrategy
-)
+from small_text.integrations.transformers.classifiers.base import ModelLoadingStrategy
 
 try:
     import torch
@@ -27,13 +25,13 @@ try:
 
     from small_text.integrations.pytorch.utils.misc import enable_dropout
     from small_text.integrations.transformers.utils.classification import (
-        _get_arguments_for_from_pretrained_model
+        _get_arguments_for_from_pretrained_model,
     )
     from small_text.integrations.transformers.utils.setfit import (
         _check_model_kwargs,
         _check_trainer_kwargs,
         _check_train_kwargs,
-        _truncate_texts
+        _truncate_texts,
     )
 except ImportError:
     pass
@@ -44,9 +42,11 @@ class SetFitModelArguments(object):
     .. versionadded:: 1.2.0
     """
 
-    def __init__(self,
-                 sentence_transformer_model: str,
-                 model_loading_strategy: ModelLoadingStrategy = ModelLoadingStrategy.DEFAULT):
+    def __init__(
+        self,
+        sentence_transformer_model: str,
+        model_loading_strategy: ModelLoadingStrategy = ModelLoadingStrategy.DEFAULT,
+    ):
         """
         Parameters
         ----------
@@ -65,7 +65,7 @@ class SetFitClassificationEmbeddingMixin(EmbeddingMixin):
     .. versionadded:: 1.2.0
     """
 
-    def embed(self, data_set, return_proba=False, pbar='tqdm'):
+    def embed(self, data_set, return_proba=False, pbar="tqdm"):
         """Embeds each sample in the given `data_set`.
 
         The embedding is created by using the underlying sentence transformer model.
@@ -89,7 +89,7 @@ class SetFitClassificationEmbeddingMixin(EmbeddingMixin):
             try:
                 check_is_fitted(self.model.model_head)
             except NotFittedError:
-                raise ValueError('Model is not trained. Please call fit() first.')
+                raise ValueError("Model is not trained. Please call fit() first.")
 
         data_set = _truncate_texts(self.model, self.max_seq_len, data_set)[0]
 
@@ -97,7 +97,7 @@ class SetFitClassificationEmbeddingMixin(EmbeddingMixin):
         predictions = []
 
         num_batches = int(np.ceil(len(data_set) / self.mini_batch_size))
-        with build_pbar_context(pbar, tqdm_kwargs={'total': len(data_set)}) as pbar:
+        with build_pbar_context(pbar, tqdm_kwargs={"total": len(data_set)}) as pbar:
             for batch in np.array_split(data_set.x, num_batches, axis=0):
 
                 batch_embeddings, probas = self._create_embeddings(batch)
@@ -134,9 +134,18 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
     .. versionadded:: 1.2.0
     """
 
-    def __init__(self, setfit_model_args, num_classes, multi_label=False, max_seq_len=512,
-                 use_differentiable_head=False, mini_batch_size=32, model_kwargs=dict(),
-                 trainer_kwargs=dict(), device=None):
+    def __init__(
+        self,
+        setfit_model_args,
+        num_classes,
+        multi_label=False,
+        max_seq_len=512,
+        use_differentiable_head=False,
+        mini_batch_size=32,
+        model_kwargs=dict(),
+        trainer_kwargs=dict(),
+        device=None,
+    ):
         """
         sentence_transformer_model : SetFitModelArguments
             Settings for the sentence transformer model to be used.
@@ -167,7 +176,7 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
         device : str or torch.device, default=None
             Torch device on which the computation will be performed.
         """
-        check_optional_dependency('setfit')
+        check_optional_dependency("setfit")
 
         self.setfit_model_args = setfit_model_args
         self.num_classes = num_classes
@@ -177,8 +186,8 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
         self.trainer_kwargs = _check_trainer_kwargs(trainer_kwargs)
 
         model_kwargs = self.model_kwargs.copy()
-        if self.multi_label and 'multi_target_strategy' not in model_kwargs:
-            model_kwargs['multi_target_strategy'] = 'one-vs-rest'
+        if self.multi_label and "multi_target_strategy" not in model_kwargs:
+            model_kwargs["multi_target_strategy"] = "one-vs-rest"
 
         from_pretrained_options = _get_arguments_for_from_pretrained_model(
             self.setfit_model_args.model_loading_strategy
@@ -217,26 +226,31 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
         if validation_set is None:
             train_set = _truncate_texts(self.model, self.max_seq_len, train_set)[0]
         else:
-            train_set, validation_set = _truncate_texts(self.model, self.max_seq_len, train_set, validation_set)
+            train_set, validation_set = _truncate_texts(
+                self.model, self.max_seq_len, train_set, validation_set
+            )
 
         x_valid = validation_set.x if validation_set is not None else None
         y_valid = validation_set.y if validation_set is not None else None
 
         if self.multi_label:
-            y_valid = _multi_label_list_to_multi_hot(csr_to_list(y_valid), self.num_classes) \
-                if y_valid is not None else None
-            y_train = _multi_label_list_to_multi_hot(csr_to_list(train_set.y), self.num_classes)
+            y_valid = (
+                _multi_label_list_to_multi_hot(csr_to_list(y_valid), self.num_classes)
+                if y_valid is not None
+                else None
+            )
+            y_train = _multi_label_list_to_multi_hot(
+                csr_to_list(train_set.y), self.num_classes
+            )
 
-            sub_train, sub_valid = self._get_train_and_valid_sets(train_set.x,
-                                                                  y_train,
-                                                                  x_valid,
-                                                                  y_valid)
+            sub_train, sub_valid = self._get_train_and_valid_sets(
+                train_set.x, y_train, x_valid, y_valid
+            )
         else:
             y_valid = y_valid.tolist() if isinstance(y_valid, np.ndarray) else y_valid
-            sub_train, sub_valid = self._get_train_and_valid_sets(train_set.x,
-                                                                  train_set.y,
-                                                                  x_valid,
-                                                                  y_valid)
+            sub_train, sub_valid = self._get_train_and_valid_sets(
+                train_set.x, train_set.y, x_valid, y_valid
+            )
 
         if self.use_differentiable_head:
             raise NotImplementedError
@@ -245,9 +259,9 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
             return self._fit(sub_train, sub_valid, setfit_train_kwargs)
 
     def _get_train_and_valid_sets(self, x_train, y_train, x_valid, y_valid):
-        sub_train = Dataset.from_dict({'text': x_train, 'label': y_train})
+        sub_train = Dataset.from_dict({"text": x_train, "label": y_train})
         if x_valid is not None:
-            sub_valid = Dataset.from_dict({'text': x_valid, 'label': y_valid})
+            sub_valid = Dataset.from_dict({"text": x_valid, "label": y_valid})
         else:
             if self.use_differentiable_head:
                 raise NotImplementedError
@@ -272,7 +286,7 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
             raise NotImplementedError()
         else:
             raise UnsupportedOperationException(
-                'validate() is not available when use_differentiable_head is set to False'
+                "validate() is not available when use_differentiable_head is set to False"
             )
 
     def predict(self, dataset, return_proba=False):
@@ -294,8 +308,12 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
             List of probabilities (or confidence estimates) if `return_proba` is True.
         """
         if len(dataset) == 0:
-            return empty_result(self.multi_label, self.num_classes, return_prediction=True,
-                                return_proba=return_proba)
+            return empty_result(
+                self.multi_label,
+                self.num_classes,
+                return_prediction=True,
+                return_proba=return_proba,
+            )
 
         proba = self.predict_proba(dataset)
         predictions = prediction_result(proba, self.multi_label, self.num_classes)
@@ -327,8 +345,12 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
            temporarily modified.
         """
         if len(dataset) == 0:
-            return empty_result(self.multi_label, self.num_classes, return_prediction=False,
-                                return_proba=True)
+            return empty_result(
+                self.multi_label,
+                self.num_classes,
+                return_prediction=False,
+                return_proba=True,
+            )
         dataset = _truncate_texts(self.model, self.max_seq_len, dataset)[0]
 
         if self.use_differentiable_head:
@@ -338,7 +360,9 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
             if dropout_sampling <= 1:
                 return self._predict_proba(dataset)
             else:
-                return self._predict_proba_dropout_sampling(dataset, dropout_samples=dropout_sampling)
+                return self._predict_proba_dropout_sampling(
+                    dataset, dropout_samples=dropout_sampling
+                )
 
     def _predict_proba(self, dataset):
         proba = np.empty((0, self.num_classes), dtype=float)
@@ -346,7 +370,9 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
         num_batches = int(np.ceil(len(dataset) / self.mini_batch_size))
         for batch in np.array_split(dataset.x, num_batches, axis=0):
             proba_tmp = np.zeros((batch.shape[0], self.num_classes), dtype=float)
-            proba_tmp[:, self.model.model_head.classes_] = self.model.predict_proba(batch)
+            proba_tmp[:, self.model.model_head.classes_] = self.model.predict_proba(
+                batch
+            )
             proba = np.append(proba, proba_tmp, axis=0)
 
         return proba
@@ -356,7 +382,9 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
 
         self.model.model_body.train()
         model_body_eval = self.model.model_body.eval
-        self.model.model_body.eval = types.MethodType(lambda x: x, self.model.model_body)
+        self.model.model_body.eval = types.MethodType(
+            lambda x: x, self.model.model_body
+        )
 
         proba = np.empty((0, dropout_samples, self.num_classes), dtype=float)
         proba[:, :, :] = np.inf
@@ -364,10 +392,16 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
         with enable_dropout(self.model.model_body):
             num_batches = int(np.ceil(len(dataset) / self.mini_batch_size))
             for batch in np.array_split(dataset.x, num_batches, axis=0):
-                samples = np.empty((dropout_samples, len(batch), self.num_classes), dtype=float)
+                samples = np.empty(
+                    (dropout_samples, len(batch), self.num_classes), dtype=float
+                )
                 for i in range(dropout_samples):
-                    proba_tmp = np.zeros((batch.shape[0], self.num_classes), dtype=float)
-                    proba_tmp[:, self.model.model_head.classes_] = self.model.predict_proba(batch)
+                    proba_tmp = np.zeros(
+                        (batch.shape[0], self.num_classes), dtype=float
+                    )
+                    proba_tmp[
+                        :, self.model.model_head.classes_
+                    ] = self.model.predict_proba(batch)
                     samples[i] = proba_tmp
 
                 samples = np.swapaxes(samples, 0, 1)
@@ -379,7 +413,7 @@ class SetFitClassification(SetFitClassificationEmbeddingMixin, Classifier):
 
     def __del__(self):
         try:
-            attrs = ['model']
+            attrs = ["model"]
             for attr in attrs:
                 delattr(self, attr)
         except Exception:

@@ -5,21 +5,23 @@ from abc import ABC, abstractmethod
 from scipy.sparse import csr_matrix
 from small_text.base import LABEL_UNLABELED
 from small_text.data import DatasetView
-from small_text.data.datasets import check_size, check_target_labels, get_updated_target_labels
+from small_text.data.datasets import (
+    check_size,
+    check_target_labels,
+    get_updated_target_labels,
+)
 from small_text.data.exceptions import UnsupportedOperationException
 from small_text.utils.annotations import experimental
 from small_text.utils.labels import csr_to_list, get_num_labels, list_to_csr
 
 
 class PytorchDataset(ABC):
-
     @abstractmethod
     def to(self, other, non_blocking=False, copy=False):
         pass
 
 
 class PytorchDatasetView(DatasetView):
-
     def __init__(self, dataset, selection):
         self.obj_class = type(self)
         self._dataset = dataset
@@ -49,7 +51,7 @@ class PytorchDatasetView(DatasetView):
 
     @x.setter
     def x(self, x):
-        raise UnsupportedOperationException('Cannot set x on a DatasetView')
+        raise UnsupportedOperationException("Cannot set x on a DatasetView")
 
     @property
     def y(self):
@@ -57,7 +59,7 @@ class PytorchDatasetView(DatasetView):
 
     @y.setter
     def y(self, y):
-        raise UnsupportedOperationException('Cannot set y on a DatasetView')
+        raise UnsupportedOperationException("Cannot set y on a DatasetView")
 
     @property
     def is_multi_label(self):
@@ -83,7 +85,7 @@ class PytorchDatasetView(DatasetView):
 
     @target_labels.setter
     def target_labels(self, target_labels):
-        raise UnsupportedOperationException('Cannot set target_labels on a DatasetView')
+        raise UnsupportedOperationException("Cannot set target_labels on a DatasetView")
 
     @abstractmethod
     def clone(self):
@@ -105,19 +107,28 @@ class PytorchDatasetView(DatasetView):
 
 
 class PytorchTextClassificationDatasetView(PytorchDatasetView):
-
     def clone(self):
         import copy
 
         if self.is_multi_label:
-            data = [(torch.clone(d[PytorchTextClassificationDataset.INDEX_TEXT]),
-                     d[PytorchTextClassificationDataset.INDEX_LABEL].copy()) for d in self.data]
+            data = [
+                (
+                    torch.clone(d[PytorchTextClassificationDataset.INDEX_TEXT]),
+                    d[PytorchTextClassificationDataset.INDEX_LABEL].copy(),
+                )
+                for d in self.data
+            ]
         else:
-            data = [(torch.clone(d[PytorchTextClassificationDataset.INDEX_TEXT]),
-                     np.copy(d[PytorchTextClassificationDataset.INDEX_LABEL])) for d in self.data]
+            data = [
+                (
+                    torch.clone(d[PytorchTextClassificationDataset.INDEX_TEXT]),
+                    np.copy(d[PytorchTextClassificationDataset.INDEX_LABEL]),
+                )
+                for d in self.data
+            ]
 
         dataset = self
-        while hasattr(dataset, 'dataset'):
+        while hasattr(dataset, "dataset"):
             dataset = dataset.dataset
 
         if dataset.track_target_labels:
@@ -125,15 +136,17 @@ class PytorchTextClassificationDatasetView(PytorchDatasetView):
         else:
             target_labels = np.copy(dataset.target_labels)
 
-        return PytorchTextClassificationDataset(data,
-                                                copy.deepcopy(self.vocab),
-                                                multi_label=self.is_multi_label,
-                                                target_labels=target_labels)
+        return PytorchTextClassificationDataset(
+            data,
+            copy.deepcopy(self.vocab),
+            multi_label=self.is_multi_label,
+            target_labels=target_labels,
+        )
 
 
 class PytorchTextClassificationDataset(PytorchDataset):
-    """Dataset class for classifiers from Pytorch Integration.
-    """
+    """Dataset class for classifiers from Pytorch Integration."""
+
     INDEX_TEXT = 0
     INDEX_LABEL = 1
 
@@ -182,8 +195,10 @@ class PytorchTextClassificationDataset(PytorchDataset):
                 self.target_labels = np.array([0])
 
     def _get_flattened_labels(self):
-        label_list = [d[self.INDEX_LABEL] if d[self.INDEX_LABEL] is not None else []
-                      for d in self._data]
+        label_list = [
+            d[self.INDEX_LABEL] if d[self.INDEX_LABEL] is not None else []
+            for d in self._data
+        ]
         if self.multi_label:
             label_list = [label for lst in label_list for label in lst]
 
@@ -209,8 +224,10 @@ class PytorchTextClassificationDataset(PytorchDataset):
     @property
     def y(self):
         if self.multi_label:
-            label_list = [d[self.INDEX_LABEL] if d[self.INDEX_LABEL] is not None else []
-                          for d in self._data]
+            label_list = [
+                d[self.INDEX_LABEL] if d[self.INDEX_LABEL] is not None else []
+                for d in self._data
+            ]
 
             if self.track_target_labels:
                 # TODO: int() cast should not be necessary here
@@ -219,10 +236,15 @@ class PytorchTextClassificationDataset(PytorchDataset):
                 num_classes = len(self.target_labels)
             return list_to_csr(label_list, shape=(len(self.data), num_classes))
         else:
-            return np.array([d[self.INDEX_LABEL]
-                             if d[self.INDEX_LABEL] is not None
-                             else LABEL_UNLABELED
-                             for d in self._data], dtype=int)
+            return np.array(
+                [
+                    d[self.INDEX_LABEL]
+                    if d[self.INDEX_LABEL] is not None
+                    else LABEL_UNLABELED
+                    for d in self._data
+                ],
+                dtype=int,
+            )
 
     @y.setter
     def y(self, y):
@@ -234,7 +256,7 @@ class PytorchTextClassificationDataset(PytorchDataset):
             for i, p in enumerate(range(num_samples)):
                 self._data[i] = (
                     self._data[i][self.INDEX_TEXT],
-                    y.indices[y.indptr[p]:y.indptr[p+1]]
+                    y.indices[y.indptr[p] : y.indptr[p + 1]],
                 )
         else:
             num_samples = y.shape[0]
@@ -244,15 +266,19 @@ class PytorchTextClassificationDataset(PytorchDataset):
                 self._data[i] = (self._data[i][self.INDEX_TEXT], _y)
 
         if self.track_target_labels:
-            self.target_labels = get_updated_target_labels(self.is_multi_label, y, self.target_labels)
+            self.target_labels = get_updated_target_labels(
+                self.is_multi_label, y, self.target_labels
+            )
         else:
             max_label_id = get_num_labels(y) - 1
             max_target_labels_id = self.target_labels.max()
             if max_label_id > max_target_labels_id:
-                raise ValueError(f'Error while assigning new labels to dataset: '
-                                 f'Encountered label with id {max_label_id} which is outside of '
-                                 f'the configured set of target labels (whose maximum label is '
-                                 f'is {max_target_labels_id}) [track_target_labels=False]')
+                raise ValueError(
+                    f"Error while assigning new labels to dataset: "
+                    f"Encountered label with id {max_label_id} which is outside of "
+                    f"the configured set of target labels (whose maximum label is "
+                    f"is {max_target_labels_id}) [track_target_labels=False]"
+                )
 
     @property
     def data(self):
@@ -295,29 +321,37 @@ class PytorchTextClassificationDataset(PytorchDataset):
     def target_labels(self, target_labels):
         encountered_labels = np.unique(self._get_flattened_labels())
         if np.setdiff1d(encountered_labels, target_labels).shape[0] > 0:
-            raise ValueError('Cannot remove existing labels from target_labels as long as they '
-                             'still exists in the data. Create a new dataset instead.')
+            raise ValueError(
+                "Cannot remove existing labels from target_labels as long as they "
+                "still exists in the data. Create a new dataset instead."
+            )
         self._target_labels = target_labels
 
     def clone(self):
         import copy
 
         if self.is_multi_label:
-            data = [(torch.clone(d[self.INDEX_TEXT]),
-                     d[self.INDEX_LABEL].copy()) for d in self._data]
+            data = [
+                (torch.clone(d[self.INDEX_TEXT]), d[self.INDEX_LABEL].copy())
+                for d in self._data
+            ]
         else:
-            data = [(torch.clone(d[self.INDEX_TEXT]),
-                     np.copy(d[self.INDEX_LABEL])) for d in self._data]
+            data = [
+                (torch.clone(d[self.INDEX_TEXT]), np.copy(d[self.INDEX_LABEL]))
+                for d in self._data
+            ]
 
         if self.track_target_labels:
             target_labels = None
         else:
             target_labels = np.copy(self._target_labels)
 
-        return PytorchTextClassificationDataset(data,
-                                                copy.deepcopy(self._vocab),
-                                                multi_label=self.multi_label,
-                                                target_labels=target_labels)
+        return PytorchTextClassificationDataset(
+            data,
+            copy.deepcopy(self._vocab),
+            multi_label=self.multi_label,
+            target_labels=target_labels,
+        )
 
     def to(self, other, non_blocking=False, copy=False):
         """Calls `torch.Tensor.to` on all Tensors in `data`.
@@ -331,14 +365,22 @@ class PytorchTextClassificationDataset(PytorchDataset):
         --------
         `PyTorch Docs - torch.Tensor.to <https://pytorch.org/docs/stable/generated/torch.Tensor.to.html>`_
         """
-        data = [(d[self.INDEX_TEXT].to(other, non_blocking=non_blocking, copy=copy),
-                 d[self.INDEX_LABEL]) for d in self._data]
+        data = [
+            (
+                d[self.INDEX_TEXT].to(other, non_blocking=non_blocking, copy=copy),
+                d[self.INDEX_LABEL],
+            )
+            for d in self._data
+        ]
 
         if copy is True:
             import copy
+
             target_labels = None if self.track_target_labels else self._target_labels
             vocab = copy.deepcopy(self._vocab)
-            return PytorchTextClassificationDataset(data, vocab, target_labels=target_labels)
+            return PytorchTextClassificationDataset(
+                data, vocab, target_labels=target_labels
+            )
         else:
             self._data = data
             return self
@@ -379,16 +421,18 @@ class PytorchTextClassificationDataset(PytorchDataset):
         """
         unk_token_idx = 0  # TODO: check this index
 
-        if not train and not hasattr(text_field, 'vocab'):
-            raise ValueError('Vocab must have been built when using this function '
-                             'to obtain test data.')
+        if not train and not hasattr(text_field, "vocab"):
+            raise ValueError(
+                "Vocab must have been built when using this function "
+                "to obtain test data."
+            )
 
         texts_preprocessed = [text_field.preprocess(text) for text in texts]
 
         if train:
             text_field.build_vocab(texts_preprocessed)
-            assert text_field.vocab.itos[0] == '<unk>'
-            assert text_field.vocab.itos[1] == '<pad>'
+            assert text_field.vocab.itos[0] == "<unk>"
+            assert text_field.vocab.itos[1] == "<pad>"
 
         multi_label = isinstance(y, csr_matrix)
         if multi_label:
@@ -398,15 +442,20 @@ class PytorchTextClassificationDataset(PytorchDataset):
 
         data = [
             (
-                torch.LongTensor([vocab.stoi[token] if token in vocab.stoi else unk_token_idx
-                                 for token in text_preprocessed]),
-                y[i]
+                torch.LongTensor(
+                    [
+                        vocab.stoi[token] if token in vocab.stoi else unk_token_idx
+                        for token in text_preprocessed
+                    ]
+                ),
+                y[i],
             )
             for i, text_preprocessed in enumerate(texts_preprocessed)
         ]
 
-        return PytorchTextClassificationDataset(data, vocab, multi_label=multi_label,
-                                                target_labels=target_labels)
+        return PytorchTextClassificationDataset(
+            data, vocab, multi_label=multi_label, target_labels=target_labels
+        )
 
     def __getitem__(self, item):
         return PytorchTextClassificationDatasetView(self, item)

@@ -5,13 +5,15 @@ from small_text.query_strategies.strategies import QueryStrategy
 from small_text.utils.context import build_pbar_context
 
 
-@constraints(classification_type='multi-label')
+@constraints(classification_type="multi-label")
 class CategoryVectorInconsistencyAndRanking(QueryStrategy):
     """Uncertainty Sampling based on Category Vector Inconsistency and Ranking of Scores [RCV18]_
     selects instances based on the inconsistency of predicted labels and per-class label rankings.
     """
 
-    def __init__(self, batch_size=2048, prediction_threshold=0.5, epsilon=1e-8, pbar='tqdm'):
+    def __init__(
+        self, batch_size=2048, prediction_threshold=0.5, epsilon=1e-8, pbar="tqdm"
+    ):
         """
         Parameters
         ----------
@@ -45,9 +47,9 @@ class CategoryVectorInconsistencyAndRanking(QueryStrategy):
 
     def _compute_scores(self, indices_unlabeled, y, proba):
         y_pred = (proba > self.prediction_threshold).astype(int)
-        vector_inconsistency_scores = self._compute_vector_inconsistency(y,
-                                                                         y_pred,
-                                                                         proba.shape[1])
+        vector_inconsistency_scores = self._compute_vector_inconsistency(
+            y, y_pred, proba.shape[1]
+        )
         ranking_scores = self._compute_ranking(indices_unlabeled, proba)
         return vector_inconsistency_scores * ranking_scores
 
@@ -59,19 +61,35 @@ class CategoryVectorInconsistencyAndRanking(QueryStrategy):
         vector_inconsistency = np.array([], dtype=np.float32)
         num_unlabeled = y_pred_unlabeled.shape[0]
 
-        with build_pbar_context(self.pbar, tqdm_kwargs={'total': num_unlabeled}) as pbar:
-            for batch_idx in np.array_split(np.arange(num_unlabeled), num_batches, axis=0):
+        with build_pbar_context(
+            self.pbar, tqdm_kwargs={"total": num_unlabeled}
+        ) as pbar:
+            for batch_idx in np.array_split(
+                np.arange(num_unlabeled), num_batches, axis=0
+            ):
                 y_pred_unlabeled_sub = y_pred_unlabeled[batch_idx]
                 # as an exception the variables a,b,c,d of the contingency table are adopted
                 a = y_pred_unlabeled_sub.dot(y_arr.T)
                 b = np.logical_not(y_pred_unlabeled_sub).dot(y_arr.T)
                 c = y_pred_unlabeled_sub.dot(np.logical_not(y_arr).T)
-                d = np.logical_not(y_pred_unlabeled_sub).dot(np.logical_not(y_arr).T).astype(int)
+                d = (
+                    np.logical_not(y_pred_unlabeled_sub)
+                    .dot(np.logical_not(y_arr).T)
+                    .astype(int)
+                )
 
                 hamming_distance = (b + c) / num_classes
 
-                distance = self._distance(y_pred_unlabeled_sub, y_arr, num_classes,
-                                          a, b, c, d, hamming_distance)
+                distance = self._distance(
+                    y_pred_unlabeled_sub,
+                    y_arr,
+                    num_classes,
+                    a,
+                    b,
+                    c,
+                    d,
+                    hamming_distance,
+                )
                 distance = distance.sum(axis=1) / y_pred_unlabeled_sub.shape[0]
                 vector_inconsistency = np.append(vector_inconsistency, distance)
 
@@ -79,33 +97,44 @@ class CategoryVectorInconsistencyAndRanking(QueryStrategy):
 
         return vector_inconsistency
 
-    def _distance(self, y_pred_unlabeled_sub, y_arr, num_classes, a, b, c, d,
-                  hamming_distance):
+    def _distance(
+        self, y_pred_unlabeled_sub, y_arr, num_classes, a, b, c, d, hamming_distance
+    ):
 
         distance = hamming_distance
 
         y_arr_ones = y_arr.sum(axis=1)
         y_arr_zeros = y_arr.shape[1] - y_arr_ones
-        entropy_labeled = self._entropy(y_arr_ones, num_classes) \
-            + self._entropy(y_arr_zeros, num_classes)
-        entropy_labeled = np.tile(entropy_labeled[np.newaxis, :],
-                                  (y_pred_unlabeled_sub.shape[0], 1))
+        entropy_labeled = self._entropy(y_arr_ones, num_classes) + self._entropy(
+            y_arr_zeros, num_classes
+        )
+        entropy_labeled = np.tile(
+            entropy_labeled[np.newaxis, :], (y_pred_unlabeled_sub.shape[0], 1)
+        )
 
         y_pred_unlabeled_sub_ones = y_pred_unlabeled_sub.sum(axis=1)
-        y_pred_unlabeled_sub_zeros = y_pred_unlabeled_sub.shape[1] - y_pred_unlabeled_sub_ones
-        entropy_unlabeled = self._entropy(y_pred_unlabeled_sub_ones, num_classes) \
-            + self._entropy(y_pred_unlabeled_sub_zeros, num_classes)
-        entropy_unlabeled = np.tile(entropy_unlabeled[:, np.newaxis], (1, y_arr.shape[0]))
+        y_pred_unlabeled_sub_zeros = (
+            y_pred_unlabeled_sub.shape[1] - y_pred_unlabeled_sub_ones
+        )
+        entropy_unlabeled = self._entropy(
+            y_pred_unlabeled_sub_ones, num_classes
+        ) + self._entropy(y_pred_unlabeled_sub_zeros, num_classes)
+        entropy_unlabeled = np.tile(
+            entropy_unlabeled[:, np.newaxis], (1, y_arr.shape[0])
+        )
 
-        joint_entropy = self._entropy(b + c, num_classes) + self._entropy(a + d, num_classes)
-        joint_entropy += (b + c) / num_classes \
-            * (self._entropy(b, b + c)
-               + self._entropy(c, b + c))
-        joint_entropy += (a + d) / num_classes \
-            * (self._entropy(a, a + d) + self._entropy(d, a + d))
+        joint_entropy = self._entropy(b + c, num_classes) + self._entropy(
+            a + d, num_classes
+        )
+        joint_entropy += (
+            (b + c) / num_classes * (self._entropy(b, b + c) + self._entropy(c, b + c))
+        )
+        joint_entropy += (
+            (a + d) / num_classes * (self._entropy(a, a + d) + self._entropy(d, a + d))
+        )
 
         entropy_distance = 2 * joint_entropy - entropy_unlabeled - entropy_labeled
-        entropy_distance /= (joint_entropy + self.epsilon)
+        entropy_distance /= joint_entropy + self.epsilon
 
         distance[hamming_distance == 1] = 1
 
@@ -123,8 +152,8 @@ class CategoryVectorInconsistencyAndRanking(QueryStrategy):
         ranking_denom = num_classes * (num_unlabeled - 1)
 
         ranking_scores = [
-            sum([num_unlabeled - ranks[j, i]
-                 for j in range(num_classes)]) / ranking_denom
+            sum([num_unlabeled - ranks[j, i] for j in range(num_classes)])
+            / ranking_denom
             for i in range(indices_unlabeled.shape[0])
         ]
         return np.array(ranking_scores)
@@ -136,13 +165,12 @@ class CategoryVectorInconsistencyAndRanking(QueryStrategy):
         margin = proba - np.tile(proba_sum[:, np.newaxis], (1, num_classes))
         margin = np.absolute(margin)
 
-        ranks = np.array([
-            np.argsort(margin[:, j])
-            for j in range(num_classes)
-        ])
+        ranks = np.array([np.argsort(margin[:, j]) for j in range(num_classes)])
         return ranks
 
     def __str__(self):
-        return f'CategoryVectorInconsistencyAndRanking(batch_size={self.batch_size}, ' \
-               f'prediction_threshold={self.prediction_threshold}, ' \
-               f'epsilon={self.epsilon})'
+        return (
+            f"CategoryVectorInconsistencyAndRanking(batch_size={self.batch_size}, "
+            f"prediction_threshold={self.prediction_threshold}, "
+            f"epsilon={self.epsilon})"
+        )

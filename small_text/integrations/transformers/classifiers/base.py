@@ -3,9 +3,9 @@ from typing import NamedTuple
 
 
 class ModelLoadingStrategy(Enum):
-    DEFAULT = 'default'
-    ALWAYS_LOCAL = 'always-local'
-    ALWAYS_DOWNLOAD = 'always-download'
+    DEFAULT = "default"
+    ALWAYS_LOCAL = "always-local"
+    ALWAYS_DOWNLOAD = "always-download"
 
 
 class PretrainedModelLoadingArguments(NamedTuple):

@@ -9,7 +9,7 @@ from small_text import (
     query_strategies,
     stopping_criteria,
     training,
-    utils
+    utils,
 )
 
 from small_text.classifiers import *
@@ -24,47 +24,47 @@ from small_text.utils import *
 from small_text.active_learner import (
     ActiveLearner,
     AbstractPoolBasedActiveLearner,
-    PoolBasedActiveLearner
+    PoolBasedActiveLearner,
 )
 from small_text.base import (
     LABEL_UNLABELED,
     LABEL_IGNORED,
     OPTIONAL_DEPENDENCIES,
-    check_optional_dependency
+    check_optional_dependency,
 )
 from small_text.exceptions import (
     ActiveLearnerException,
     ConstraintViolationError,
     LearnerNotInitializedException,
-    MissingOptionalDependencyError
+    MissingOptionalDependencyError,
 )
 from small_text.version import get_version
 from small_text.utils.system import is_pytorch_available, is_transformers_available
 
 __all__ = (
-    classifiers.__all__ +
-    data.__all__ +
-    initialization.__all__ +
-    query_strategies.__all__ +
-    stopping_criteria.__all__ +
-    training.__all__ +
-    utils.__all__
+    classifiers.__all__
+    + data.__all__
+    + initialization.__all__
+    + query_strategies.__all__
+    + stopping_criteria.__all__
+    + training.__all__
+    + utils.__all__
 )
 
 
 __all__ = __all__ + [
-    'ActiveLearner',
-    'AbstractPoolBasedActiveLearner',
-    'PoolBasedActiveLearner',
-    'LABEL_UNLABELED',
-    'LABEL_IGNORED',
-    'OPTIONAL_DEPENDENCIES',
-    'check_optional_dependency',
-    'ActiveLearnerException',
-    'ConstraintViolationError',
-    'LearnerNotInitializedException',
-    'MissingOptionalDependencyError',
-    'get_version'
+    "ActiveLearner",
+    "AbstractPoolBasedActiveLearner",
+    "PoolBasedActiveLearner",
+    "LABEL_UNLABELED",
+    "LABEL_IGNORED",
+    "OPTIONAL_DEPENDENCIES",
+    "check_optional_dependency",
+    "ActiveLearnerException",
+    "ConstraintViolationError",
+    "LearnerNotInitializedException",
+    "MissingOptionalDependencyError",
+    "get_version",
 ]
 
 

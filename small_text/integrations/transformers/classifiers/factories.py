@@ -1,11 +1,11 @@
 from small_text.classifiers.factories import AbstractClassifierFactory
-from small_text.integrations.transformers.classifiers.classification import \
-    TransformerBasedClassification
+from small_text.integrations.transformers.classifiers.classification import (
+    TransformerBasedClassification,
+)
 from small_text.integrations.transformers.classifiers.setfit import SetFitClassification
 
 
 class TransformerBasedClassificationFactory(AbstractClassifierFactory):
-
     def __init__(self, transformer_model_args, num_classes, kwargs={}):
         """
         Parameters
@@ -29,9 +29,9 @@ class TransformerBasedClassificationFactory(AbstractClassifierFactory):
         classifier : TransformerBasedClassification
             A new instance of TransformerBasedClassification which is initialized with the given keyword args `kwargs`.
         """
-        return TransformerBasedClassification(self.transformer_model_args,
-                                              self.num_classes,
-                                              **self.kwargs)
+        return TransformerBasedClassification(
+            self.transformer_model_args, self.num_classes, **self.kwargs
+        )
 
 
 class SetFitClassificationFactory(AbstractClassifierFactory):
@@ -62,6 +62,6 @@ class SetFitClassificationFactory(AbstractClassifierFactory):
         classifier : SetFitClassification
             A new instance of SetFitClassification which is initialized with the given keyword args `kwargs`.
         """
-        return SetFitClassification(self.setfit_model_args,
-                                    self.num_classes,
-                                    **self.classification_kwargs)
+        return SetFitClassification(
+            self.setfit_model_args, self.num_classes, **self.classification_kwargs
+        )

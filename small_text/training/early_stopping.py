@@ -5,7 +5,6 @@ from abc import ABC
 
 
 class EarlyStoppingHandler(ABC):
-
     def check_early_stop(self, epoch, measured_values):
         """Checks if the training should be stopped early. The decision is made based on
         the masured values of one or more quantitative metrics over time.
@@ -48,6 +47,7 @@ class EarlyStopping(EarlyStoppingHandler):
 
     .. versionadded:: 1.1.0
     """
+
     def __init__(self, metric, min_delta=1e-14, patience=5, threshold=0.0):
         """
         Parameters
@@ -70,8 +70,15 @@ class EarlyStopping(EarlyStoppingHandler):
         self._validate_arguments(metric, min_delta, patience, threshold)
 
         self._dtype = {
-            'names': ['epoch', 'count', 'train_acc', 'train_loss', 'val_acc', 'val_loss'],
-            'formats': [int, int, float, float, float, float]
+            "names": [
+                "epoch",
+                "count",
+                "train_acc",
+                "train_loss",
+                "val_acc",
+                "val_loss",
+            ],
+            "formats": [int, int, float, float, float, float],
         }
 
         self.metric = metric
@@ -84,17 +91,23 @@ class EarlyStopping(EarlyStoppingHandler):
 
     def _validate_arguments(self, metric, min_delta, patience, threshold):
         if min_delta < 0:
-            raise ValueError('Invalid value encountered: '
-                             '"min_delta" needs to be greater than zero.')
+            raise ValueError(
+                "Invalid value encountered: "
+                '"min_delta" needs to be greater than zero.'
+            )
 
         if patience < 0 and threshold <= 0:
-            raise ValueError('Invalid configuration encountered: '
-                             'Either "patience" or "threshold" must be enabled.')
+            raise ValueError(
+                "Invalid configuration encountered: "
+                'Either "patience" or "threshold" must be enabled.'
+            )
 
-        if '_acc' in metric.name and (threshold < 0.0 or threshold > 1.0):
-            raise ValueError('Invalid value encountered: '
-                             '"threshold" needs to be within the interval [0, 1] '
-                             'for accuracy metrics.')
+        if "_acc" in metric.name and (threshold < 0.0 or threshold > 1.0):
+            raise ValueError(
+                "Invalid value encountered: "
+                '"threshold" needs to be within the interval [0, 1] '
+                "for accuracy metrics."
+            )
 
     def check_early_stop(self, epoch, measured_values):
         """Checks if the training should be stopped early. The decision is made based on
@@ -119,12 +132,16 @@ class EarlyStopping(EarlyStoppingHandler):
         metric_sign = -1 if self.metric.lower_is_better else 1
 
         measured_value = measured_values.get(self.metric.name, None)
-        has_crossed_threshold = measured_value is not None and \
-            np.sign(measured_value - self.threshold) == metric_sign
+        has_crossed_threshold = (
+            measured_value is not None
+            and np.sign(measured_value - self.threshold) == metric_sign
+        )
         if self.threshold > 0 and has_crossed_threshold:
-            logging.debug(f'Early stopping: Threshold exceeded. '
-                          f'[value={measured_values[self.metric.name]}, '
-                          f'threshold={self.threshold}]')
+            logging.debug(
+                f"Early stopping: Threshold exceeded. "
+                f"[value={measured_values[self.metric.name]}, "
+                f"threshold={self.threshold}]"
+            )
             return True
         elif measured_value is None:
             return False
@@ -154,22 +171,30 @@ class EarlyStopping(EarlyStoppingHandler):
             self._index_best = index_last
             return False
         else:
-            history_since_previous_best = self._history[self._index_best + 1:][self.metric.name]
+            history_since_previous_best = self._history[self._index_best + 1 :][
+                self.metric.name
+            ]
             rows_not_nan = np.logical_not(np.isnan(history_since_previous_best))
             if rows_not_nan.sum() > self.patience:
-                logging.debug(f'Early stopping: Patience exceeded.'
-                              f'{{value={index_last-self._index_best}, patience={self.patience}}}')
+                logging.debug(
+                    f"Early stopping: Patience exceeded."
+                    f"{{value={index_last-self._index_best}, patience={self.patience}}}"
+                )
                 return True
             return False
 
     def add_to_history(self, epoch, measured_values):
-        count = (self._history['epoch'] == epoch).sum()
-        tuple_measured_values = (measured_values.get('train_acc', None),
-                                 measured_values.get('train_loss', None),
-                                 measured_values.get('val_acc', None),
-                                 measured_values.get('val_loss', None))
-        return np.append(self._history,
-                         np.array((epoch, count) + tuple_measured_values, dtype=self._dtype))
+        count = (self._history["epoch"] == epoch).sum()
+        tuple_measured_values = (
+            measured_values.get("train_acc", None),
+            measured_values.get("train_loss", None),
+            measured_values.get("val_acc", None),
+            measured_values.get("val_loss", None),
+        )
+        return np.append(
+            self._history,
+            np.array((epoch, count) + tuple_measured_values, dtype=self._dtype),
+        )
 
 
 class EarlyStoppingOrCondition(EarlyStoppingHandler):
@@ -179,6 +204,7 @@ class EarlyStoppingOrCondition(EarlyStoppingHandler):
 
     .. versionadded:: 1.1.0
     """
+
     def __init__(self, early_stopping_handlers):
         """
         Parameters
@@ -201,7 +227,9 @@ class EarlyStoppingOrCondition(EarlyStoppingHandler):
         """
         results = []
         for early_stopping_handler in self.early_stopping_handlers:
-            results.append(early_stopping_handler.check_early_stop(epoch, measured_values))
+            results.append(
+                early_stopping_handler.check_early_stop(epoch, measured_values)
+            )
         return np.any(results)
 
 
@@ -212,6 +240,7 @@ class EarlyStoppingAndCondition(EarlyStoppingHandler):
 
     .. versionadded:: 1.1.0
     """
+
     def __init__(self, early_stopping_handlers):
         """
         Parameters
@@ -234,5 +263,7 @@ class EarlyStoppingAndCondition(EarlyStoppingHandler):
         """
         results = []
         for early_stopping_handler in self.early_stopping_handlers:
-            results.append(early_stopping_handler.check_early_stop(epoch, measured_values))
+            results.append(
+                early_stopping_handler.check_early_stop(epoch, measured_values)
+            )
         return np.any(results)

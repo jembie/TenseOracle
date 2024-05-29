@@ -7,7 +7,9 @@ from small_text.utils.annotations import prediction_result_enc_warning
 from small_text.utils.labels import list_to_csr
 
 
-def get_splits(train_set, validation_set, weights=None, multi_label=False, validation_set_size=0.1):
+def get_splits(
+    train_set, validation_set, weights=None, multi_label=False, validation_set_size=0.1
+):
     """Helper method to ensure that a validation set is available after calling this method.
     This is only necessary when the previous code did not select a validation set prior to this,
     otherwise the passed `validation_set` variable is not None and no action is necessary here.
@@ -41,17 +43,21 @@ def get_splits(train_set, validation_set, weights=None, multi_label=False, valid
     else:
         if multi_label:
             # note: this is not an optimal multi-label strategy right now
-            indices_train, indices_valid = split_data(train_set,
-                                                      y=train_set.y.indices,
-                                                      strategy='random',
-                                                      validation_set_size=validation_set_size,
-                                                      return_indices=True)
+            indices_train, indices_valid = split_data(
+                train_set,
+                y=train_set.y.indices,
+                strategy="random",
+                validation_set_size=validation_set_size,
+                return_indices=True,
+            )
         else:
-            indices_train, indices_valid = split_data(train_set,
-                                                      y=train_set.y,
-                                                      strategy='stratified',
-                                                      validation_set_size=validation_set_size,
-                                                      return_indices=True)
+            indices_train, indices_valid = split_data(
+                train_set,
+                y=train_set.y,
+                strategy="stratified",
+                validation_set_size=validation_set_size,
+                return_indices=True,
+            )
         result = train_set[indices_train], train_set[indices_valid]
 
     if weights is not None:
@@ -99,9 +105,11 @@ def prediction_result(proba, multi_label, num_classes, return_proba=False, enc=N
 
         if return_proba:
             data = proba[predictions_binarized.astype(bool)]
-            proba = csr_matrix((data, predictions.indices, predictions.indptr),
-                               shape=predictions.shape,
-                               dtype=np.float64)
+            proba = csr_matrix(
+                (data, predictions.indices, predictions.indptr),
+                shape=predictions.shape,
+                dtype=np.float64,
+            )
     else:
         predictions = np.argmax(proba, axis=1)
 
@@ -137,18 +145,24 @@ def empty_result(multi_label, num_classes, return_prediction=True, return_proba=
         An empty ndarray of probabilities if `return_proba` is True.
     """
     if not return_prediction and not return_proba:
-        raise ValueError('Invalid usage: At least one of \'prediction\' or \'proba\' must be True')
+        raise ValueError(
+            "Invalid usage: At least one of 'prediction' or 'proba' must be True"
+        )
 
     elif multi_label:
         if return_prediction and return_proba:
-            return csr_matrix((0, num_classes), dtype=np.int64), csr_matrix((0, num_classes), dtype=float)
+            return csr_matrix((0, num_classes), dtype=np.int64), csr_matrix(
+                (0, num_classes), dtype=float
+            )
         elif return_prediction:
             return csr_matrix((0, num_classes), dtype=np.int64)
         else:
             return csr_matrix((0, num_classes), dtype=float)
     else:
         if return_prediction and return_proba:
-            return np.empty((0, num_classes), dtype=np.int64), np.empty(shape=(0, num_classes), dtype=float)
+            return np.empty((0, num_classes), dtype=np.int64), np.empty(
+                shape=(0, num_classes), dtype=float
+            )
         elif return_prediction:
             return np.empty((0, num_classes), dtype=np.int64)
         else:
@@ -156,5 +170,7 @@ def empty_result(multi_label, num_classes, return_prediction=True, return_proba=
 
 
 def _multi_label_list_to_multi_hot(multi_label_list, num_classes):
-    return [[0 if i not in set(entry) else 1 for i in range(num_classes)]
-            for entry in multi_label_list]
+    return [
+        [0 if i not in set(entry) else 1 for i in range(num_classes)]
+        for entry in multi_label_list
+    ]

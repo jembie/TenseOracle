@@ -3,7 +3,7 @@ from small_text.base import LABEL_UNLABELED
 
 
 def list_length(x):
-    if hasattr(x, 'shape'):
+    if hasattr(x, "shape"):
         return x.shape[0]
     else:
         return len(x)
@@ -32,13 +32,17 @@ def check_training_data(train_set, validation_set, weights=None):
 
     if train_set.is_multi_label is False:
         if (train_set.y == LABEL_UNLABELED).any():
-            raise ValueError('Training set labels must be labeled (greater or equal zero)')
+            raise ValueError(
+                "Training set labels must be labeled (greater or equal zero)"
+            )
         if validation_set is not None and (validation_set.y == LABEL_UNLABELED).any():
-            raise ValueError('Validation set labels must be labeled (greater or equal zero)')
+            raise ValueError(
+                "Validation set labels must be labeled (greater or equal zero)"
+            )
 
     if weights is not None:
         if len(train_set) != weights.shape[0]:
-            raise ValueError('Training data and weights must have the same size.')
+            raise ValueError("Training data and weights must have the same size.")
 
         if not np.all(weights > 0):
-            raise ValueError('Weights must be greater zero.')
+            raise ValueError("Weights must be greater zero.")

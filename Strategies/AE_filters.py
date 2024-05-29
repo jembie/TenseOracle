@@ -30,9 +30,9 @@ from transformers import RobertaTokenizer
 
 
 class AutoFilter_Chen_Like(FilterStrategy):
-    '''
+    """
     Idea: Use an Auto-encoder Ensemble to detect outliers
-    '''
+    """
 
     def __init__(self, device, **kwargs):
         """
@@ -67,18 +67,23 @@ class AutoFilter_Chen_Like(FilterStrategy):
             max_layers -= 1
 
         # Decoder is same in reversed order
-        layer_dims = layer_dims + [(input, output) for (output, input) in layer_dims[::-1]]
+        layer_dims = layer_dims + [
+            (input, output) for (output, input) in layer_dims[::-1]
+        ]
 
         # Creating layers with random connection removal
         for i, dims in enumerate(layer_dims):
             layer = nn.Linear(*dims)
             layers.append(layer)
-            layers.append(nn.Sigmoid() if (
-                    i == 0 or i + 1 == len(layer_dims)) else nn.ReLU())  # First and last sigmoid all others RELU
+            layers.append(
+                nn.Sigmoid() if (i == 0 or i + 1 == len(layer_dims)) else nn.ReLU()
+            )  # First and last sigmoid all others RELU
 
         return nn.Sequential(*layers)
 
-    def drop_neurons(self, model_in: nn.Module, connection_drop_rate=0.1, device="cuda:0"):
+    def drop_neurons(
+        self, model_in: nn.Module, connection_drop_rate=0.1, device="cuda:0"
+    ):
         """
         Set weight of randomly chosen neurons to 0
         i.e. Freeze them
@@ -93,12 +98,22 @@ class AutoFilter_Chen_Like(FilterStrategy):
         for layer in model_out.modules():
             if isinstance(layer, nn.Linear):
                 with torch.no_grad():
-                    mask = (torch.rand(layer.weight.size()) > connection_drop_rate).float()
+                    mask = (
+                        torch.rand(layer.weight.size()) > connection_drop_rate
+                    ).float()
                     layer.weight = nn.Parameter(layer.weight * mask.to(device))
 
         return model_out
 
-    def pretrain_layer(self, model: nn.Module, train_loader, layer_index, criterion, device="cuda:0", epochs=5):
+    def pretrain_layer(
+        self,
+        model: nn.Module,
+        train_loader,
+        layer_index,
+        criterion,
+        device="cuda:0",
+        epochs=5,
+    ):
         """
         Pretrain a specific layer of the autoencoder.
         Short:
@@ -117,7 +132,7 @@ class AutoFilter_Chen_Like(FilterStrategy):
         # Make copy of original to check if it worked as intended at end
         old_model = copy.deepcopy(model)
         # Create preprocessor i.e. outer layers:
-        preprocessor = nn.Sequential(*params[:layer_index * 2])
+        preprocessor = nn.Sequential(*params[: layer_index * 2])
         # Create a shallow model for the moment with only the 2 layers that shall be trained + 1 Placeholder
         encoder = params[layer_index * 2]
         decoder = params[-(layer_index + 1) * 2]
@@ -145,7 +160,9 @@ class AutoFilter_Chen_Like(FilterStrategy):
         # All others should have remained unchanged
         old_weights = [p.detach().to("cpu") for p in old_model.parameters()]
         new_weights = [p.detach().to("cpu") for p in model.parameters()]
-        num_consitent_layers = sum([torch.all(o == n) for (o, n) in zip(old_weights, new_weights)])
+        num_consitent_layers = sum(
+            [torch.all(o == n) for (o, n) in zip(old_weights, new_weights)]
+        )
         assert len(old_weights) - num_consitent_layers == 4
         return None  # Model was trained in place
 
@@ -164,8 +181,14 @@ class AutoFilter_Chen_Like(FilterStrategy):
 
         for layer_index in range(num_layers):
             print(f"Pretraining layer {layer_index + 1}/{num_layers}")
-            self.pretrain_layer(model=model, train_loader=train_loader, layer_index=layer_index, criterion=criterion,
-                                device="cuda:0", epochs=epochs)
+            self.pretrain_layer(
+                model=model,
+                train_loader=train_loader,
+                layer_index=layer_index,
+                criterion=criterion,
+                device="cuda:0",
+                epochs=epochs,
+            )
 
     def detect_outliers(self, ensemble: list[nn.Module], dataset):
         """
@@ -199,7 +222,9 @@ class AutoFilter_Chen_Like(FilterStrategy):
         # Use median loss for each sample
         outlier_scores = np.median(losses, axis=0)
         # Classical Outlier Detection mean + s standard deviations as thresholds
-        htl_mask = outlier_scores > (np.mean(outlier_scores) + 2 * np.std(outlier_scores))
+        htl_mask = outlier_scores > (
+            np.mean(outlier_scores) + 2 * np.std(outlier_scores)
+        )
 
         return htl_mask
 
@@ -221,7 +246,9 @@ class AutoFilter_Chen_Like(FilterStrategy):
         base_model = base_model.to(device=self.device)
 
         # Pretrain a base model (something like a template)
-        self.pretrain_autoencoder(base_model, data_loader, self.criterion, optimizer, epochs=3)
+        self.pretrain_autoencoder(
+            base_model, data_loader, self.criterion, optimizer, epochs=3
+        )
 
         ENSEMBLE_SIZE = 30
         ensemble = []
@@ -250,19 +277,21 @@ class AutoFilter_Chen_Like(FilterStrategy):
 
         return ensemble
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         # Delay start because depends on CLF Embedding which gets (currently) finetuned on labeled data
         # TODO (FUTURE WORK): unsupervised/self supervised finetuning should suffice
         # E.g. MLM, NSP, ClozeQuestions or SetFit Style training could allow usage already in first iteration
@@ -272,7 +301,7 @@ class AutoFilter_Chen_Like(FilterStrategy):
         # Only need to calculate outliers scores once
         if self.outlier_scores is None:
             # Embed data (we try to find outliers with weird embeddings)
-            #embeddings = clf.embed(dataset, embedding_method="cls")
+            # embeddings = clf.embed(dataset, embedding_method="cls")
 
             # Train Autoencoders
             ensemble = self.train_ensemble(embeddings)
@@ -287,6 +316,7 @@ class Autoencoder(nn.Module):
     """
     A simple LSTM Based AutoEncoder
     """
+
     def __init__(self, vocab_size, embed_dim):
         super(Autoencoder, self).__init__()
 
@@ -316,8 +346,9 @@ class Autoencoder(nn.Module):
 
         return x
 
+
 class AutoFilter_LSTM(FilterStrategy):
-    '''
+    """
     Idea: Use Auto-encoders to detect outliers
     Codename: AE-Class-Certain-T1
     Features:
@@ -326,12 +357,13 @@ class AutoFilter_LSTM(FilterStrategy):
     - Consider only the 1% (i.e. about 5 Samples) with the highest Loss among the 500 as HTL
     - Train Ensemble
     - Create Diversity by pseudo labeling data and splitting dataset by class label
-    '''
+    """
+
     def __init__(self, tokenizer: RobertaTokenizer, device, **kwargs):
-        '''
+        """
         :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["tokenizer"])
         :return:
-        '''
+        """
         self.tokenizer = tokenizer
         self.committee = []
         self.committee_size = None
@@ -342,7 +374,7 @@ class AutoFilter_LSTM(FilterStrategy):
         self.scores = None
         self.predictions = []
 
-    def train_model(self, dataset)->nn.Module:
+    def train_model(self, dataset) -> nn.Module:
         """
         Create an LSTM model
         Train it on the given dataset and return it
@@ -365,11 +397,11 @@ class AutoFilter_LSTM(FilterStrategy):
                 line_ = line.to(self.device)
                 optimizer.zero_grad()
                 output = model(line_)
-                loss = self.criterion(torch.transpose(output,dim0=1,dim1=2), line_)
+                loss = self.criterion(torch.transpose(output, dim0=1, dim1=2), line_)
                 loss.backward()
                 optimizer.step()
                 if idx % 500 == 0:
-                    print(f'Epoch [{epoch + 1}/{EPOCH_COUNT}], Loss: {loss.item():.4f}')
+                    print(f"Epoch [{epoch + 1}/{EPOCH_COUNT}], Loss: {loss.item():.4f}")
         # Finish Training
         model.eval()
         return model
@@ -386,7 +418,6 @@ class AutoFilter_LSTM(FilterStrategy):
         output = model(tokens)
         loss = self.criterion(output, tokens)
         return loss.item()
-
 
     def detect_outliers(self, dataset, indices_chosen: np.ndarray):
         def calc_threshold(model):  # self.scores is None:
@@ -409,7 +440,9 @@ class AutoFilter_LSTM(FilterStrategy):
             m.to(self.device)
             # Let model vote for what it considers HTL
             threshold = calc_threshold(m)
-            losses = [self.calculate_loss(dataset.x[idx], model=m) for idx in indices_chosen]
+            losses = [
+                self.calculate_loss(dataset.x[idx], model=m) for idx in indices_chosen
+            ]
             # Collect Votes
             masks.append(np.array(losses) > threshold)
             # Clean Up afterwards
@@ -417,23 +450,25 @@ class AutoFilter_LSTM(FilterStrategy):
             torch.cuda.empty_cache()
 
         # Every sample that gets a majority vote is considered HTL
-        htl_mask = np.sum(np.stack(masks), axis=0) > (len(self.committee)//2)
+        htl_mask = np.sum(np.stack(masks), axis=0) > (len(self.committee) // 2)
 
         return htl_mask
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         predictions = probas  # clf.predict_proba(dataset)
         self.predictions.append(predictions)
         self.last_confidence = confidence
@@ -449,7 +484,7 @@ class AutoFilter_LSTM(FilterStrategy):
             # Calculate Certainty of average distribution (i.e. did they all agree/disagree were they all uncertain?)
             entr = entropy(pred_avg, axis=1)
             # Which Samples have exceptionally high entropy
-            entr_mask = entr < np.mean(entr)+2*np.std(entr)
+            entr_mask = entr < np.mean(entr) + 2 * np.std(entr)
             # Assign the most likely class to each sample based on averaged distributions
             classes = np.argmax(pred_avg, axis=1)
 
@@ -464,7 +499,7 @@ class AutoFilter_LSTM(FilterStrategy):
             # Train Models
             for i in range(self.committee_size):
                 # Select one of the splits created earlier
-                train_indices = copy.copy(splits[i%len(splits)])
+                train_indices = copy.copy(splits[i % len(splits)])
                 np.random.shuffle(train_indices)
                 train_set = dataset[train_indices]
                 # Train model only on samples of one class to get sufficient diversity
@@ -489,11 +524,12 @@ class AutoFilter_LSTM_SIMPLE(AutoFilter_LSTM):
     - Train Single LSTM Model
     - Doesn't need Labeled data so can start immediately
     """
+
     def __init__(self, tokenizer: RobertaTokenizer, device, **kwargs):
-        '''
+        """
         :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["tokenizer"])
         :return:
-        '''
+        """
         self.tokenizer = tokenizer
         self.model = None
         self.criterion = None
@@ -501,7 +537,6 @@ class AutoFilter_LSTM_SIMPLE(AutoFilter_LSTM):
         self.threshold = None
         self.scores = None
         self.EPOCH_COUNT = 10
-
 
     def detect_outliers(self, dataset, indices_chosen: np.ndarray):
         """
@@ -521,23 +556,27 @@ class AutoFilter_LSTM_SIMPLE(AutoFilter_LSTM):
         # Forced Ranking: We assume that 1% of samples with the highest Loss in those 500 are HTL
         self.threshold = np.percentile(self.scores, 99)
         # Calculate Reconstruction Loss of chosen samples
-        losses = [self.calculate_loss(dataset.x[idx], self.model) for idx in indices_chosen]
+        losses = [
+            self.calculate_loss(dataset.x[idx], self.model) for idx in indices_chosen
+        ]
         # Return Mask
         return np.array(losses) > self.threshold
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         # Doesn't require any Labels to run so can start immediately
         if self.model is None:
             self.model = self.train_model(dataset)

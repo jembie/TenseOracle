@@ -36,30 +36,33 @@ class LoserFilter_SSL_Variety(FilterStrategy):
     - Trains 10 Dataset maps on different random subsets of pseudo labeled data and co
 
     """
+
     def __init__(self, **kwargs):
-        '''
+        """
         :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["clf_factory"])
         :return:
-        '''
+        """
         self.clf_factory: TransformerBasedClassificationFactory = kwargs["clf_factory"]
         self.predictions_over_time = []
         self.already_labeled_htl = defaultdict(int)
         self.last_labeled_set_size = 0
         self.current_iteration = 0
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         if self.current_iteration < iteration:
             # Track Predictions over Iteration for Pseudo Labels Later on
             self.current_iteration = iteration
@@ -76,11 +79,23 @@ class LoserFilter_SSL_Variety(FilterStrategy):
         pseudo_labels = [np.argmax(np.bincount(votes[:, i])) for i in indices_chosen]
 
         # Entire Labelled & Pseudo Labeled dataset for Training
-        diverse_labelled_dataset = dataset[np.concatenate([indices_chosen, indices_labeled])].clone()
-        diverse_labelled_dataset.y = np.concatenate([pseudo_labels, y], axis=0, dtype=np.int64)
+        diverse_labelled_dataset = dataset[
+            np.concatenate([indices_chosen, indices_labeled])
+        ].clone()
+        diverse_labelled_dataset.y = np.concatenate(
+            [pseudo_labels, y], axis=0, dtype=np.int64
+        )
 
         # Label Samples with the Label that has the most Votes (Mark uncertain samples with -1)
-        pseudo_labels_all = np.array([np.argmax(np.bincount(votes[:, i])) if np.max(np.bincount(votes[:, i])) >= np.sum(np.bincount(votes[:, i]))*0.8 else -1 for i in range(votes.shape[1])])
+        pseudo_labels_all = np.array(
+            [
+                np.argmax(np.bincount(votes[:, i]))
+                if np.max(np.bincount(votes[:, i]))
+                >= np.sum(np.bincount(votes[:, i])) * 0.8
+                else -1
+                for i in range(votes.shape[1])
+            ]
+        )
         # Replace Labels for samples that were labeled already by oracle
         pseudo_labels_all[indices_labeled] = y
         # If Chosen Samples were marked as uncertain reset to official Pseudo Label
@@ -90,10 +105,14 @@ class LoserFilter_SSL_Variety(FilterStrategy):
         safe_pseudo_indices = np.argwhere(pseudo_labels_all >= 0).flatten()
         # Create Train set of Certain Samples
         extended_labelled_train_set = dataset[safe_pseudo_indices].clone()
-        extended_labelled_train_set.y = np.array(pseudo_labels_all[safe_pseudo_indices], dtype=np.int64)
+        extended_labelled_train_set.y = np.array(
+            pseudo_labels_all[safe_pseudo_indices], dtype=np.int64
+        )
 
         # Create Cartographer Callback that tracks Chosen Samples and Oracle Labeled Data (To establish baseline)
-        cartographer = SmallTextCartographer(dataset=diverse_labelled_dataset, outputs_to_probabilities=calc_probs)
+        cartographer = SmallTextCartographer(
+            dataset=diverse_labelled_dataset, outputs_to_probabilities=calc_probs
+        )
         # Create Placeholder Val Set (We don't care about it)
         val_set = diverse_labelled_dataset[:10].clone()
         val_set.y = np.array(diverse_labelled_dataset.y[:10], dtype=np.int64)
@@ -106,7 +125,11 @@ class LoserFilter_SSL_Variety(FilterStrategy):
             pseudo_clf.num_epochs = 5
             pseudo_clf.callbacks.append(cartographer)
             # Sample Random Subset for Training
-            indices_rand = np.random.choice(np.arange(len(extended_labelled_train_set)), replace=False, size=len(extended_labelled_train_set)//4)
+            indices_rand = np.random.choice(
+                np.arange(len(extended_labelled_train_set)),
+                replace=False,
+                size=len(extended_labelled_train_set) // 4,
+            )
             train_set = extended_labelled_train_set[indices_rand].clone()
             train_set.y = np.array(train_set.y, dtype=np.int64)
             # Train CLF
@@ -115,46 +138,49 @@ class LoserFilter_SSL_Variety(FilterStrategy):
         # Calculate Outlier Threshold as mean - 2 * std
         m = np.mean(cartographer.correctness)
         std = np.std(cartographer.correctness)
-        threshold = m - 2*std
+        threshold = m - 2 * std
         # Which of the chosen Samples are exceptionally hard to predict?
-        htl_mask = cartographer.correctness[:len(indices_chosen)] <= threshold
+        htl_mask = cartographer.correctness[: len(indices_chosen)] <= threshold
 
         return htl_mask
 
 
 class LoserFilter_Plain(FilterStrategy):
-    '''
+    """
     A Losers can't Cheat Filter (CodeName DSM-LevelUp-Part1)
 
     - Use no extra train data except chosen samples
     - Weight recent predictions stronger for calculating pseudo labels
     - Doesn't skip first 2 Iters for Pseudo Labeling
     - Delays start by 5 Iters
-    '''
+    """
+
     def __init__(self, **kwargs):
-        '''
+        """
         :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["clf_factory"])
         :return:
-        '''
+        """
         self.clf_factory: TransformerBasedClassificationFactory = kwargs["clf_factory"]
         self.predictions_over_time = []
         self.already_labeled_htl = defaultdict(int)
         self.last_labeled_set_size = 0
         self.current_iteration = 0
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         # only one prediction per iteration (matters only when forced batchsize)
         if self.current_iteration < iteration:
             # Track Predictions over Iteration for Pseudo Labels Later on
@@ -168,15 +194,25 @@ class LoserFilter_Plain(FilterStrategy):
         # convert to np.array
         predictions_over_time = np.array(self.predictions_over_time)
         votes = np.argmax(predictions_over_time, axis=2)
-        pseudo_labels = [np.argmax(np.bincount(votes[:, i], weights=np.arange(1, votes.shape[0]+1))) for i in indices_chosen]
-
+        pseudo_labels = [
+            np.argmax(
+                np.bincount(votes[:, i], weights=np.arange(1, votes.shape[0] + 1))
+            )
+            for i in indices_chosen
+        ]
 
         # Entire Labelled & Pseudo Labeled dataset for Training
-        diverse_labelled_dataset = dataset[np.concatenate([indices_chosen, indices_labeled])].clone()
-        diverse_labelled_dataset.y = np.concatenate([pseudo_labels, y], axis=0, dtype=np.int64)
+        diverse_labelled_dataset = dataset[
+            np.concatenate([indices_chosen, indices_labeled])
+        ].clone()
+        diverse_labelled_dataset.y = np.concatenate(
+            [pseudo_labels, y], axis=0, dtype=np.int64
+        )
 
         # We also track already labeled data to establish a baseline of what we consider weird
-        cartographer = SmallTextCartographer(dataset=diverse_labelled_dataset, outputs_to_probabilities=calc_probs)
+        cartographer = SmallTextCartographer(
+            dataset=diverse_labelled_dataset, outputs_to_probabilities=calc_probs
+        )
         val_set = diverse_labelled_dataset[:10].clone()
         val_set.y = np.array(diverse_labelled_dataset.y[:10], dtype=np.int64)
         # Train Model
@@ -190,27 +226,28 @@ class LoserFilter_Plain(FilterStrategy):
         # Calculate Outlier Threshold as mean - 2 * std
         m = np.mean(cartographer.correctness)
         std = np.std(cartographer.correctness)
-        threshold = m - 2*std
+        threshold = m - 2 * std
         # Which of the chosen Samples are exceptionally hard to predict?
-        htl_mask = cartographer.correctness[:len(indices_chosen)] <= threshold
+        htl_mask = cartographer.correctness[: len(indices_chosen)] <= threshold
 
         return htl_mask
 
 
 class LoserFilter_Optimized_Pseudo_Labels(FilterStrategy):
-    '''
+    """
     Codename: Renovatio5
 
     Features:
     - Optimized Pseudolabeling
         (Optimized on dev data s.t. PseudoLabeling in early epochs agrees with Pseudo Labels assigned in last)
     - Late Start (after 7Iterations)
-    '''
+    """
+
     def __init__(self, **kwargs):
-        '''
+        """
         :param kwargs: requires argument with a TransformerBasedClassificationFactory (kwargs["clf_factory"])
         :return:
-        '''
+        """
         self.clf_factory: TransformerBasedClassificationFactory = kwargs["clf_factory"]
         self.predictions_over_time = []
         self.already_labeled_htl = defaultdict(int)
@@ -242,8 +279,11 @@ class LoserFilter_Optimized_Pseudo_Labels(FilterStrategy):
         -------
         """
         start = -11
-        consensus = np.average(probabilities[start:], axis=0,
-                               weights=np.arange(1, min(-start, probabilities.shape[0]) + 1))
+        consensus = np.average(
+            probabilities[start:],
+            axis=0,
+            weights=np.arange(1, min(-start, probabilities.shape[0]) + 1),
+        )
         return np.argmax(consensus, axis=1)
 
     def mixed_crowd(self, probabilities):  # 5 0.905863881072342 + Outlier Avoidance
@@ -255,31 +295,35 @@ class LoserFilter_Optimized_Pseudo_Labels(FilterStrategy):
     def pseudo_label_uncertainty_clipping(self, probabilities):
         start = -14
         mask = np.ones(probabilities.shape[1])
-        consensus = np.average(probabilities[start:], axis=0,
-                               weights=np.arange(1, min(-start, probabilities.shape[0]) + 1))
+        consensus = np.average(
+            probabilities[start:],
+            axis=0,
+            weights=np.arange(1, min(-start, probabilities.shape[0]) + 1),
+        )
         entropies = entropy(consensus, axis=1)
         mask[entropies > np.mean(entropies)] = 0
         return mask
-
 
     def calculate_pseudo_labels(self, probabilities):
         pseudo_labels = self.mixed_crowd(probabilities)
         mask = self.pseudo_label_uncertainty_clipping(probabilities)
         return pseudo_labels, mask
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         if self.current_iteration < iteration:
             # Track Predictions over Iteration for Pseudo Labels Later on
             self.current_iteration = iteration
@@ -291,15 +335,23 @@ class LoserFilter_Optimized_Pseudo_Labels(FilterStrategy):
             return np.zeros_like(indices_chosen, dtype=bool)
 
         # Calculate Pseudo Labels for all Datapoints and a mask on which points we are fairly certain
-        pseudo_labels, mask = self.calculate_pseudo_labels(np.array(self.predictions_over_time))
+        pseudo_labels, mask = self.calculate_pseudo_labels(
+            np.array(self.predictions_over_time)
+        )
         pseudo_labels = pseudo_labels[indices_chosen]
 
         # Create DS for Dataset Map
-        diverse_labelled_dataset = dataset[np.concatenate([indices_chosen, indices_labeled])].clone()
-        diverse_labelled_dataset.y = np.concatenate([pseudo_labels, y], axis=0, dtype=np.int64)
+        diverse_labelled_dataset = dataset[
+            np.concatenate([indices_chosen, indices_labeled])
+        ].clone()
+        diverse_labelled_dataset.y = np.concatenate(
+            [pseudo_labels, y], axis=0, dtype=np.int64
+        )
 
         # We also track already labeled data to establish a baseline of what we consider weird
-        cartographer = SmallTextCartographer(dataset=diverse_labelled_dataset, outputs_to_probabilities=calc_probs)
+        cartographer = SmallTextCartographer(
+            dataset=diverse_labelled_dataset, outputs_to_probabilities=calc_probs
+        )
         # Placeholder Val Set
         val_set = diverse_labelled_dataset[:10].clone()
         val_set.y = np.array(diverse_labelled_dataset.y[:10], dtype=np.int64)
@@ -313,8 +365,7 @@ class LoserFilter_Optimized_Pseudo_Labels(FilterStrategy):
         # extract HTL map from Cartographer
         m = np.mean(cartographer.correctness)
         std = np.std(cartographer.correctness)
-        threshold = m - 2*std
-        htl_mask = cartographer.correctness[:len(indices_chosen)] <= threshold
+        threshold = m - 2 * std
+        htl_mask = cartographer.correctness[: len(indices_chosen)] <= threshold
 
         return htl_mask
-

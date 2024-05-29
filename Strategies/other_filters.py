@@ -18,11 +18,12 @@ from tqdm.auto import tqdm
 
 
 class SingleStepEntropy(FilterStrategy):
-    '''
+    """
     Idea: We allow each sample to choose for themselves a label
     We train model again with each pseudo labeled sample i.e. 1 Step only
     If Entropy increases on unlabeled data we consider the sample HTL
-    '''
+    """
+
     def __init__(self, **kwargs):
         self.entrs = []
         self.current_iteration = 0
@@ -53,8 +54,11 @@ class SingleStepEntropy(FilterStrategy):
         -------
         """
         start = -11
-        consensus = np.average(probabilities[start:], axis=0,
-                               weights=np.arange(1, min(-start, probabilities.shape[0]) + 1))
+        consensus = np.average(
+            probabilities[start:],
+            axis=0,
+            weights=np.arange(1, min(-start, probabilities.shape[0]) + 1),
+        )
         return np.argmax(consensus, axis=1)
 
     def mixed_crowd(self, probabilities):  # 5 0.905863881072342 + Outlier Avoidance
@@ -66,31 +70,35 @@ class SingleStepEntropy(FilterStrategy):
     def pseudo_label_uncertainty_clipping(self, probabilities):
         start = -14
         mask = np.ones(probabilities.shape[1])
-        consensus = np.average(probabilities[start:], axis=0,
-                               weights=np.arange(1, min(-start, probabilities.shape[0]) + 1))
+        consensus = np.average(
+            probabilities[start:],
+            axis=0,
+            weights=np.arange(1, min(-start, probabilities.shape[0]) + 1),
+        )
         entropies = entropy(consensus, axis=1)
         mask[entropies > np.mean(entropies)] = 0
         return mask
-
 
     def calculate_pseudo_labels(self, probabilities):
         pseudo_labels = self.mixed_crowd(probabilities)
         mask = self.pseudo_label_uncertainty_clipping(probabilities)
         return pseudo_labels, mask
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         # Track class distribution for each sample over iterations
         if self.current_iteration < iteration:
             self.current_iteration = iteration
@@ -103,18 +111,22 @@ class SingleStepEntropy(FilterStrategy):
             return np.zeros_like(indices_chosen, dtype=bool)
 
         # Calculate Pseudo Labels
-        pseudo_labels, mask = self.calculate_pseudo_labels(np.array(self.predictions_over_time))
+        pseudo_labels, mask = self.calculate_pseudo_labels(
+            np.array(self.predictions_over_time)
+        )
 
         # For this to work we will need to check alot of models on how uncertain they are on a given DS
         # Fortunately: we don't require Labeled data for this therefore the unlabeled pool provides us a val set
         # Unfortunately: This gets very expensive very fast therefore we need to down sample the val set
-        validation_indices = np.random.choice(np.arange(len(dataset)), replace=False, size=min(len(dataset), 1000))
+        validation_indices = np.random.choice(
+            np.arange(len(dataset)), replace=False, size=min(len(dataset), 1000)
+        )
         validation_set = dataset[validation_indices].clone()
         validation_set.y = np.zeros_like(validation_indices)
         # Test Current Model to set Baseline i.e. what is the avg. entr. of the current model on the val set
-        #proba_ = probas[validation_indices]
+        # proba_ = probas[validation_indices]
         proba = clf.predict_proba(validation_set)
-        #assert np.all(np.round(proba, decimals=5)==np.round(proba_, decimals=5))
+        # assert np.all(np.round(proba, decimals=5)==np.round(proba_, decimals=5))
         entropies = entropy(proba, axis=1)
         entropy_original = np.average(entropies)
 
@@ -153,8 +165,6 @@ class SingleStepEntropy(FilterStrategy):
         # or if many worsen perf we only remove samples that perform especially bad (as unlikely that all samples HTL)
         htl_mask = differences > max(threshold, 0)
         return htl_mask
-
-
 
 
 class SingleStepEntropy_SimplePseudo(SingleStepEntropy):

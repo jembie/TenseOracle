@@ -30,13 +30,13 @@ from scipy.stats import entropy
 
 
 class TeachingFilter(FilterStrategy):
-    '''
+    """
     Codename: LE-Clean
     Idea: We track over multiple iterations a learning metric e.g. Entropy and how much it changes
     If it improved less over the iterations than most others then we assume HTL
     Assumption: If the sample didn't learn from all the ones that came before
     then the others won't learn from it as well because they are too dissimilar
-    '''
+    """
 
     def __init__(self, **kwargs):
         self.probs = []
@@ -59,7 +59,7 @@ class TeachingFilter(FilterStrategy):
         return np.swapaxes(ret, axis, -1)
 
     def learning_entropy(self, matrix):
-        '''
+        """
         Assumption: if learning a sample 1 classes probability should increase with every step and all other should fall
         We calculate how monotone (Note: Not how steep) a classes probability rises
         Then we compare it to the behaviour of the other classes via softmax
@@ -73,7 +73,7 @@ class TeachingFilter(FilterStrategy):
         High LearningEntropy might indicate that the sample is so different that the others didn't affect this one and vice versa
         :param matrix:
         :return:
-        '''
+        """
         # Moving average to reduce random fluctuations
         smooth_matrix = self.moving_average(matrix, n=3, axis=0)
         # Collect Votes at different distances
@@ -84,7 +84,7 @@ class TeachingFilter(FilterStrategy):
         # has increased compared to a previous iteration and a -1 if it has decreased
         results = np.zeros(smooth_matrix.shape[1:])
         for n in range(1, smooth_matrix.shape[0]):
-            r = ((smooth_matrix[n:, :, :] - smooth_matrix[:-n, :, :]) > 0)
+            r = (smooth_matrix[n:, :, :] - smooth_matrix[:-n, :, :]) > 0
             results += np.sum(r, axis=0) - np.sum(~r, axis=0)
         # normalize Results
         results_norm = results / sum(range(smooth_matrix.shape[0]))
@@ -100,19 +100,21 @@ class TeachingFilter(FilterStrategy):
         threshold = mean_entropy + 2 * std_entropy
         return threshold
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 indices_already_avoided: list,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        indices_already_avoided: list,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
         if self.current_iteration < iteration:
             # Track class distribution for each sample over iterations
             self.current_iteration = iteration
@@ -133,7 +135,7 @@ class TeachingFilter(FilterStrategy):
 
 
 class TeachingFilter_Smooth(TeachingFilter):
-    '''
+    """
     Codename: LE-Smooth
     Idea: We track over multiple iterations a learning metric e.g. Entropy and how much it changes
     If it improved less over the iterations than most others then we assume HTL
@@ -145,7 +147,7 @@ class TeachingFilter_Smooth(TeachingFilter):
         i.e. how much and in which direction has the class probability changed over iterations
         instead of only asking in which direction
         Advantage: Minor deviations from monotone growth/decrease get only minorly punished
-    '''
+    """
 
     def __init__(self, **kwargs):
         self.probs = []
@@ -153,7 +155,7 @@ class TeachingFilter_Smooth(TeachingFilter):
         self.start_delay = 5
 
     def learning_entropy(self, matrix):
-        '''
+        """
         Assumption: if learning a sample 1 classes probability should increase with every step and all other should fall
         We calculate how monotone (Note: Not how steep) a classes probability rises
         Then we compare it to the behaviour of the other classes via softmax
@@ -167,13 +169,13 @@ class TeachingFilter_Smooth(TeachingFilter):
         High LearningEntropy might indicate that the sample is so different that the others didn't affect this one and vice versa
         :param matrix:
         :return:
-        '''
+        """
         # Moving average to reduce random fluctuations
         smooth_matrix = self.moving_average(matrix, n=3, axis=0)
         # Calculate change over different distances
         results = np.zeros(smooth_matrix.shape[1:])
         for n in range(1, smooth_matrix.shape[0]):
-            r = (smooth_matrix[n:, :, :] - smooth_matrix[:-n, :, :])
+            r = smooth_matrix[n:, :, :] - smooth_matrix[:-n, :, :]
             results += np.sum(r, axis=0)
         # normalize-ish Results
         results_norm = results / sum(range(smooth_matrix.shape[0]))
@@ -182,13 +184,13 @@ class TeachingFilter_Smooth(TeachingFilter):
 
 
 class TeachingFilter_WOW(TeachingFilter):
-    '''
+    """
     Codename: LE-WOW
 
     Features:
     - Extra Delayed Start
     - Only consider the 500 samples with (currently) highest entropy when calculating Threshold (what we consider HTL)
-    '''
+    """
 
     def __init__(self, **kwargs):
         self.probs = []
@@ -197,7 +199,9 @@ class TeachingFilter_WOW(TeachingFilter):
 
     def calc_threshold(self, learning_entropy):
         # Only use 500 most uncertain samples as those have probably higher concentration of HTL Samples
-        learning_entropy_wow = learning_entropy[np.argsort(-entropy(self.probs[-1], axis=1))[:500]]
+        learning_entropy_wow = learning_entropy[
+            np.argsort(-entropy(self.probs[-1], axis=1))[:500]
+        ]
         # Define Threshold
         std_entropy = np.std(learning_entropy_wow)
         mean_entropy = np.mean(learning_entropy_wow)

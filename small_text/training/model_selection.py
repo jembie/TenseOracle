@@ -33,12 +33,13 @@ class ModelSelectionResult(object):
         self.fields = fields
 
     def __repr__(self):
-        return f'ModelSelectionResult(\'{self.model_id}\', \'{self.model_path}\', ' \
-               f'{self.measured_values}, {self.fields})'
+        return (
+            f"ModelSelectionResult('{self.model_id}', '{self.model_path}', "
+            f"{self.measured_values}, {self.fields})"
+        )
 
 
 class ModelSelectionManager(ABC):
-
     def add_model(self, model_id, model_path, measured_values, step=0, fields=dict()):
         """Adds the data for a trained model. This includes measured values of certain metrics
         and additional fields by which a model selection strategy then selects the model.
@@ -81,6 +82,7 @@ class NoopModelSelection(ModelSelectionManager):
 
     .. versionadded:: 1.1.0
     """
+
     def __init__(self):
         self.last_model_id = None
 
@@ -100,24 +102,32 @@ class ModelSelection(ModelSelectionManager):
     """
 
     DEFAULT_METRICS = [
-        Metric('val_loss'),
-        Metric('val_acc', lower_is_better=False),
-        Metric('train_loss'),
-        Metric('train_acc', lower_is_better=False)
+        Metric("val_loss"),
+        Metric("val_acc", lower_is_better=False),
+        Metric("train_loss"),
+        Metric("train_acc", lower_is_better=False),
     ]
     """Default metric configuration to be used."""
 
-    DEFAULT_REQUIRED_METRIC_NAMES = ['val_loss', 'val_acc']
+    DEFAULT_REQUIRED_METRIC_NAMES = ["val_loss", "val_acc"]
     """Names of the metrics that must be reported to add_model()."""
 
-    FIELD_NAME_EARLY_STOPPING = 'early_stop'
+    FIELD_NAME_EARLY_STOPPING = "early_stop"
     """Field name for the early stopping default field."""
 
-    DEFAULT_DEFAULT_SELECT_BY = ['val_loss', 'val_acc']  # default "default_select_value" setting
+    DEFAULT_DEFAULT_SELECT_BY = [
+        "val_loss",
+        "val_acc",
+    ]  # default "default_select_value" setting
     """Metrics by which the `select()` function chooses the best model."""
 
-    def __init__(self, default_select_by=DEFAULT_DEFAULT_SELECT_BY, metrics=DEFAULT_METRICS,
-                 required=DEFAULT_REQUIRED_METRIC_NAMES, fields_config=dict()):
+    def __init__(
+        self,
+        default_select_by=DEFAULT_DEFAULT_SELECT_BY,
+        metrics=DEFAULT_METRICS,
+        required=DEFAULT_REQUIRED_METRIC_NAMES,
+        fields_config=dict(),
+    ):
         """
         Parameters
         ----------
@@ -135,8 +145,10 @@ class ModelSelection(ModelSelectionManager):
             required by model selection strategies.
         """
         if ModelSelection.FIELD_NAME_EARLY_STOPPING in fields_config:
-            raise ValueError(f'Name conflict for field {ModelSelection.FIELD_NAME_EARLY_STOPPING} '
-                             f'which already exists as a default field.')
+            raise ValueError(
+                f"Name conflict for field {ModelSelection.FIELD_NAME_EARLY_STOPPING} "
+                f"which already exists as a default field."
+            )
 
         if isinstance(default_select_by, str):
             default_select_by = [default_select_by]
@@ -147,16 +159,23 @@ class ModelSelection(ModelSelectionManager):
         self.required = set(required)
         self._verify_metrics(self.metrics, required)
 
-        self._fields_config = {**fields_config, **{ModelSelection.FIELD_NAME_EARLY_STOPPING: bool}}
+        self._fields_config = {
+            **fields_config,
+            **{ModelSelection.FIELD_NAME_EARLY_STOPPING: bool},
+        }
 
-        names = ['model_id', 'model_path'] \
-            + [metric.name for metric in self.metrics] \
+        names = (
+            ["model_id", "model_path"]
+            + [metric.name for metric in self.metrics]
             + list(self._fields_config.keys())
-        formats = [object, object] \
-            + [metric.dtype for metric in self.metrics] \
+        )
+        formats = (
+            [object, object]
+            + [metric.dtype for metric in self.metrics]
             + list(self._fields_config.values())
+        )
 
-        self.dtype = {'names': names, 'formats': formats}
+        self.dtype = {"names": names, "formats": formats}
 
         self.last_model_id = None
         self.models = np.empty((0,), dtype=self.dtype)
@@ -166,25 +185,29 @@ class ModelSelection(ModelSelectionManager):
         metric_names = set([metric.name for metric in metrics])
         for required_metric_name in required:
             if required_metric_name not in metric_names:
-                raise ValueError(f'Required metric "{required_metric_name}" is not within the '
-                                 f'list of given metrics.')
+                raise ValueError(
+                    f'Required metric "{required_metric_name}" is not within the '
+                    f"list of given metrics."
+                )
 
     @staticmethod
     def _verify_select_by(metrics, required, select_by):
         configured_metrics = np.union1d([metric.name for metric in metrics], required)
         setdiff = np.setdiff1d(select_by, configured_metrics)
         if configured_metrics.shape[0] > 0 and setdiff.shape[0] > 0:
-            raise ValueError(f'Invalid metric(s) in select_by: {setdiff.tolist()}')
+            raise ValueError(f"Invalid metric(s) in select_by: {setdiff.tolist()}")
 
     def add_model(self, model_id, model_path, measured_values, fields=dict()):
-        if (self.models['model_id'] == model_id).sum() > 0:
+        if (self.models["model_id"] == model_id).sum() > 0:
             raise ValueError(f'Duplicate model_id "{model_id}')
-        elif (self.models['model_path'] == model_path).sum() > 0:
+        elif (self.models["model_path"] == model_path).sum() > 0:
             raise ValueError(f'Duplicate model_path "{model_path}')
 
         for metric_name in self.required:
             if metric_name not in measured_values:
-                raise ValueError(f'Required measured values missing for metric "{metric_name}"')
+                raise ValueError(
+                    f'Required measured values missing for metric "{metric_name}"'
+                )
 
         tuple_measured_values = tuple(
             [measured_values.get(metric.name, None) for metric in self.metrics]
@@ -219,7 +242,9 @@ class ModelSelection(ModelSelectionManager):
             select_by = self.default_select_by
 
         # valid rows are rows where no early stopping has been triggered
-        valid_rows = np.not_equal(self.models[ModelSelection.FIELD_NAME_EARLY_STOPPING], True)
+        valid_rows = np.not_equal(
+            self.models[ModelSelection.FIELD_NAME_EARLY_STOPPING], True
+        )
         if not np.any(valid_rows):  # checks if we have no valid rows
             return None
 
@@ -232,10 +257,14 @@ class ModelSelection(ModelSelectionManager):
         )
         indices = np.lexsort(tuples)
 
-        model_id = rows['model_id'][indices[0]]
-        model_path = rows['model_path'][indices[0]]
+        model_id = rows["model_id"][indices[0]]
+        model_path = rows["model_path"][indices[0]]
 
-        measured_values = {metric.name: rows[metric.name][indices[0]] for metric in self.metrics}
+        measured_values = {
+            metric.name: rows[metric.name][indices[0]] for metric in self.metrics
+        }
         fields = {key: rows[key][indices[0]] for key in self._fields_config}
 
-        return ModelSelectionResult(model_id, model_path, measured_values, fields=fields)
+        return ModelSelectionResult(
+            model_id, model_path, measured_values, fields=fields
+        )

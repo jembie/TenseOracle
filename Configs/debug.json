@@ -1,14 +1,14 @@
 {
-  "SEED_SIZE": 8,
-  "ITERATIONS": 8,
-  "QUERY_BATCH_SIZE": 8,
-  "TRAIN_BATCH_SIZE": 8,
-  "MAX_TRAIN_SIZE": 1000,
-  "SET_EVAL_ITERATIONS": 2,
-  "DOM_EVAL_ITERATIONS": 3,
-  "NUM_EPOCHS": 1,
-  "LR": 2e-5,
-  "MODEL_NAME": "distilroberta-base",
-  "CACHE_ADR": "./cache",
-  "SHARED_CACHE_ADR": "./cache"
+	"SEED_SIZE": 8,
+	"ITERATIONS": 8,
+	"QUERY_BATCH_SIZE": 8,
+	"TRAIN_BATCH_SIZE": 8,
+	"MAX_TRAIN_SIZE": 1000,
+	"SET_EVAL_ITERATIONS": 2,
+	"DOM_EVAL_ITERATIONS": 3,
+	"NUM_EPOCHS": 1,
+	"LR": 2e-5,
+	"MODEL_NAME": "distilroberta-base",
+	"CACHE_ADR": "./cache",
+	"SHARED_CACHE_ADR": "./cache"
 }

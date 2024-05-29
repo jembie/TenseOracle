@@ -2,7 +2,11 @@ import torch
 from small_text import TransformerBasedClassificationFactory, TransformerModelArguments
 import Strategies
 from Strategies import acquisition_functions, filters
-from small_text import QueryStrategy, PoolBasedActiveLearner, random_initialization_balanced
+from small_text import (
+    QueryStrategy,
+    PoolBasedActiveLearner,
+    random_initialization_balanced,
+)
 from Utilities.evaluation import domination_test
 from Utilities.preprocessing import load_tokenizer
 import numpy as np
@@ -12,7 +16,7 @@ import time
 
 def load_model(config: dict, num_classes):
     if torch.cuda.is_available():
-        kwargs = {'device': 'cuda:0'}
+        kwargs = {"device": "cuda:0"}
     else:
         kwargs = {}
     kwargs["cache_dir"] = config["SHARED_CACHE_ADR"]
@@ -22,9 +26,7 @@ def load_model(config: dict, num_classes):
     kwargs["validations_per_epoch"] = 1
     kwargs["lr"] = config["LR"]
     clf_factory = TransformerBasedClassificationFactory(
-        TransformerModelArguments(config["MODEL_NAME"]),
-        num_classes,
-        kwargs=kwargs
+        TransformerModelArguments(config["MODEL_NAME"]), num_classes, kwargs=kwargs
     )
     return clf_factory
 
@@ -40,7 +42,9 @@ class HTLOverseer(QueryStrategy):
     with and without those samples to find out whether our FilterStrategy only denied harmful ones.
     """
 
-    def __init__(self, filter_strategy: filters.FilterStrategy, query_strategy: QueryStrategy):
+    def __init__(
+        self, filter_strategy: filters.FilterStrategy, query_strategy: QueryStrategy
+    ):
         super().__init__()
         self.filter_strategy = filter_strategy
         self.query_strategy = query_strategy
@@ -51,23 +55,27 @@ class HTLOverseer(QueryStrategy):
     def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10):
         self.iter_counter += 1
         unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(self.htl_tracker))
-        chosen_samples, confidence, proba, embeddings = self.query_strategy.query(clf, _dataset, unlabeled_pool, indices_labeled, y, n=n)
+        chosen_samples, confidence, proba, embeddings = self.query_strategy.query(
+            clf, _dataset, unlabeled_pool, indices_labeled, y, n=n
+        )
         if not self.filter_strategy:
             # If no Filter Strategy in use just return samples as is
             return chosen_samples
         start_time = time.time()
-        htl_mask = self.filter_strategy(indices_chosen=chosen_samples,
-                                        confidence=confidence,
-                                        probas=proba,
-                                        embeddings=embeddings,
-                                        indices_already_avoided=self.htl_tracker,
-                                        clf=clf,
-                                        dataset=_dataset,
-                                        indices_unlabeled=indices_unlabeled,
-                                        indices_labeled=indices_labeled,
-                                        y=y,
-                                        n=n,
-                                        iteration=self.iter_counter)
+        htl_mask = self.filter_strategy(
+            indices_chosen=chosen_samples,
+            confidence=confidence,
+            probas=proba,
+            embeddings=embeddings,
+            indices_already_avoided=self.htl_tracker,
+            clf=clf,
+            dataset=_dataset,
+            indices_unlabeled=indices_unlabeled,
+            indices_labeled=indices_labeled,
+            y=y,
+            n=n,
+            iteration=self.iter_counter,
+        )
         duration = time.time() - start_time
         self.time_tracker.append(duration)
         # Add HTL samples to HTL tracker
@@ -83,7 +91,9 @@ class HTLOverseer(QueryStrategy):
         return np.array(list(set(self.htl_tracker)))
 
 
-def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -> HTLOverseer:
+def load_query_strategy(
+    strategy_name, filter_name, config, args, num_classes
+) -> HTLOverseer:
     """
     Loads a QueryStrategy (also called AcquisitionFunction)
     and Wraps a filter around it that is supposed to
@@ -108,7 +118,9 @@ def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -
     else:
         filter_strategy = None
     # Add Filter to Query Strategy
-    query_strategy = HTLOverseer(filter_strategy=filter_strategy, query_strategy=query_strategy)
+    query_strategy = HTLOverseer(
+        filter_strategy=filter_strategy, query_strategy=query_strategy
+    )
 
     return query_strategy
 
@@ -128,7 +140,9 @@ def initialize_active_learner(active_learner, y_train, config):
     :return:
     """
     # Select Samples
-    indices_initial = random_initialization_balanced(y_train, n_samples=config['SEED_SIZE'])
+    indices_initial = random_initialization_balanced(
+        y_train, n_samples=config["SEED_SIZE"]
+    )
     # Imagine Human Expert Providing Label here
     y_initial = y_train[indices_initial]
     # Initialize Learner
@@ -137,7 +151,9 @@ def initialize_active_learner(active_learner, y_train, config):
     return indices_initial
 
 
-def active_learning_step(active_learner: PoolBasedActiveLearner, train, indices_labeled, num_samples):
+def active_learning_step(
+    active_learner: PoolBasedActiveLearner, train, indices_labeled, num_samples
+):
     # Clear Memory
     gc.collect()
     torch.cuda.empty_cache()
@@ -154,15 +170,18 @@ def active_learning_step(active_learner: PoolBasedActiveLearner, train, indices_
     return indices_labeled
 
 
-def perform_active_learning(active_learner: PoolBasedActiveLearner,
-                            config,
-                            args,
-                            indices_labeled,
-                            train,
-                            test,
-                            experiment,
-                            ):
-    total_budget = config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
+def perform_active_learning(
+    active_learner: PoolBasedActiveLearner,
+    config,
+    args,
+    indices_labeled,
+    train,
+    test,
+    experiment,
+):
+    total_budget = (
+        config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
+    )
     for i in range(config["ITERATIONS"]):
         indices_labeled = active_learning_step(
             active_learner=active_learner,
@@ -172,7 +191,11 @@ def perform_active_learning(active_learner: PoolBasedActiveLearner,
         )
 
         # When evaluating we ignore Pseudo-labeled data because we don't know whether it is true
-        print('Iteration #{:d} ({} train samples)'.format(i, len(active_learner.indices_labeled)))
+        print(
+            "Iteration #{:d} ({} train samples)".format(
+                i, len(active_learner.indices_labeled)
+            )
+        )
         if args.dom_test:
             dom_results = domination_test(
                 active_learner=active_learner,
@@ -181,7 +204,7 @@ def perform_active_learning(active_learner: PoolBasedActiveLearner,
                 config=config,
                 args=args,
                 step=i,
-                experiment=experiment
+                experiment=experiment,
             )
             for key in dom_results.keys():
                 print(f"{key}: {dom_results[key]}")
@@ -191,7 +214,9 @@ def perform_active_learning(active_learner: PoolBasedActiveLearner,
                 active_learner=active_learner,
                 train=train,
                 indices_labeled=indices_labeled,
-                num_samples=min(config["QUERY_BATCH_SIZE"], total_budget - len(indices_labeled)),
+                num_samples=min(
+                    config["QUERY_BATCH_SIZE"], total_budget - len(indices_labeled)
+                ),
             )
         assert len(indices_labeled) == total_budget
 

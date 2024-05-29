@@ -10,22 +10,23 @@ from sklearn.metrics import f1_score
 
 def evaluate(active_learner, test):
     y_pred_test = active_learner.classifier.predict(test)
-    f1 = f1_score(y_pred_test, test.y, average='micro')
+    f1 = f1_score(y_pred_test, test.y, average="micro")
 
-    print('Test accuracy(on {} samples): {:.2f}'.format(len(test), f1))
-    print('---')
+    print("Test accuracy(on {} samples): {:.2f}".format(len(test), f1))
+    print("---")
     return f1
 
 
-def compare_datasets(active_learner,
-                     train,
-                     test,
-                     indices_labeled,
-                     indices_unlabeled,
-                     indices_htl,
-                     iterations,
-                     random_seed,
-                     ) -> dict:
+def compare_datasets(
+    active_learner,
+    train,
+    test,
+    indices_labeled,
+    indices_unlabeled,
+    indices_htl,
+    iterations,
+    random_seed,
+) -> dict:
     """
     Combines Labeled, found HTL, and unlabeled data into 3 variants.
     Labeled Data, Labeled Data with HTL Samples,
@@ -48,8 +49,12 @@ def compare_datasets(active_learner,
     unused_budget = len(indices_htl)
 
     def replace_htl_with_random(indices_unlabeled):
-        random_replacement_for_htl = np.random.choice(indices_unlabeled, unused_budget, replace=False).astype(np.int64)
-        indices_labeled_backup = np.concatenate((indices_labeled, random_replacement_for_htl), axis=0, dtype=np.int64)
+        random_replacement_for_htl = np.random.choice(
+            indices_unlabeled, unused_budget, replace=False
+        ).astype(np.int64)
+        indices_labeled_backup = np.concatenate(
+            (indices_labeled, random_replacement_for_htl), axis=0, dtype=np.int64
+        )
         return indices_labeled_backup
 
     for experiment_name in ["no_htl", "htl", "random"]:
@@ -65,16 +70,22 @@ def compare_datasets(active_learner,
         elif experiment_name == "htl":
             # The dataset as requested if Filter not active (probably)
             # We assume: Worse due to HTL samples
-            indices_labeled_backup = np.concatenate((indices_labeled, indices_htl), axis=0)
+            indices_labeled_backup = np.concatenate(
+                (indices_labeled, indices_htl), axis=0
+            )
         else:
-            raise NotImplementedError(f"Experiment with name {experiment_name} is not yet implemented")
+            raise NotImplementedError(
+                f"Experiment with name {experiment_name} is not yet implemented"
+            )
 
         results[experiment_name] = []
         for i in tqdm(range(iterations)):
             # Bring in diversity by setting diff seed each time
             set_random_seed(random_seed + i)
             # Shuffle Dataset each time to get better evaluation
-            indices_labeled_ = copy.copy(indices_labeled_backup).astype(np.int64)  # make copy to not shuffle original
+            indices_labeled_ = copy.copy(indices_labeled_backup).astype(
+                np.int64
+            )  # make copy to not shuffle original
             np.random.shuffle(indices_labeled_)
 
             y_initial = train.y[indices_labeled_].astype(np.int64)
@@ -89,35 +100,42 @@ def compare_datasets(active_learner,
     return results
 
 
-def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
-                           args,
-                           config,
-                           train,
-                           indices_labeled: np.ndarray,
-                           indices_unlabeled: np.ndarray,
-                           indices_htl: np.ndarray,
-                           test,
-                           experiment
-                           ):
-    '''
+def assess_dataset_quality(
+    active_learner: PoolBasedActiveLearner,
+    args,
+    config,
+    train,
+    indices_labeled: np.ndarray,
+    indices_unlabeled: np.ndarray,
+    indices_htl: np.ndarray,
+    test,
+    experiment,
+):
+    """
     Retrains and evaluates model multiple times with the same set because we don't trust
     a single evaluation to represent the quality of a dataset, and therefore we can't trust
     that this represents the quality of the strategy
-    '''
-    total_budget = config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
+    """
+    total_budget = (
+        config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
+    )
     unused_budget = total_budget - len(indices_labeled)
     # We assume that budget was only lost due to HTL avoidance nothing else
-    assert unused_budget == len(indices_htl) or (args.use_up_entire_budget and unused_budget==0)
+    assert unused_budget == len(indices_htl) or (
+        args.use_up_entire_budget and unused_budget == 0
+    )
 
     print("Start Queried DS Evaluation")
-    results = compare_datasets(active_learner=active_learner,
-                               train=train,
-                               test=test,
-                               indices_labeled=indices_labeled,
-                               indices_unlabeled=indices_unlabeled,
-                               indices_htl=indices_htl,
-                               iterations=config["SET_EVAL_ITERATIONS"],
-                               random_seed=args.random_seed)
+    results = compare_datasets(
+        active_learner=active_learner,
+        train=train,
+        test=test,
+        indices_labeled=indices_labeled,
+        indices_unlabeled=indices_unlabeled,
+        indices_htl=indices_htl,
+        iterations=config["SET_EVAL_ITERATIONS"],
+        random_seed=args.random_seed,
+    )
 
     for experiment_name in results.keys():
         experiment.log_results(results[experiment_name], experiment_name)
@@ -135,10 +153,14 @@ def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
         "medF1 (With HTL)": median_with_htl,
         "medF1 (random replacement)": median_replacement,
         "HTL Count": len(indices_htl),
-        "ASO-Sig[1]": deepsig.aso(results["no_htl"], results["htl"], seed=args.random_seed),
-        "ASO-Sig[2]": deepsig.aso(results["random"], results["htl"], seed=args.random_seed),
+        "ASO-Sig[1]": deepsig.aso(
+            results["no_htl"], results["htl"], seed=args.random_seed
+        ),
+        "ASO-Sig[2]": deepsig.aso(
+            results["random"], results["htl"], seed=args.random_seed
+        ),
         "HTL_harms_median": median_no_htl - median_with_htl,
-        "HTL_low_val_median": median_replacement - median_with_htl
+        "HTL_low_val_median": median_replacement - median_with_htl,
     }
 
     # TODO Commit all results to Comet for later in depth eval
@@ -146,24 +168,30 @@ def assess_dataset_quality(active_learner: PoolBasedActiveLearner,
     return final_results
 
 
-def domination_test(active_learner: PoolBasedActiveLearner,
-                   train,
-                   test,
-                   config,
-                   args,
-                   step,
-                   experiment: CometExperiment):
+def domination_test(
+    active_learner: PoolBasedActiveLearner,
+    train,
+    test,
+    config,
+    args,
+    step,
+    experiment: CometExperiment,
+):
     indices_labeled = active_learner.indices_labeled
     indices_htl = active_learner.query_strategy.indices_htl
-    indices_unlabeled = np.setdiff1d(np.arange(len(train)), np.concatenate((indices_htl, indices_labeled)))
-    results = compare_datasets(active_learner=active_learner,
-                               train=train,
-                               test=test,
-                               indices_labeled=indices_labeled,
-                               indices_unlabeled=indices_unlabeled,
-                               indices_htl=indices_htl,
-                               iterations=config["DOM_EVAL_ITERATIONS"],
-                               random_seed=args.random_seed)
+    indices_unlabeled = np.setdiff1d(
+        np.arange(len(train)), np.concatenate((indices_htl, indices_labeled))
+    )
+    results = compare_datasets(
+        active_learner=active_learner,
+        train=train,
+        test=test,
+        indices_labeled=indices_labeled,
+        indices_unlabeled=indices_unlabeled,
+        indices_htl=indices_htl,
+        iterations=config["DOM_EVAL_ITERATIONS"],
+        random_seed=args.random_seed,
+    )
 
     metrics_to_log = {}
     for experiment_name in results.keys():

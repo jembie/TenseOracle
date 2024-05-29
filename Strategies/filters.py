@@ -9,21 +9,22 @@ class FilterStrategy(ABC):
         pass
 
     @abstractmethod
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 confidence: np.ndarray,
-                 embeddings: np.ndarray,
-                 probas: np.ndarray,
-                 indices_already_avoided: list,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10,
-                 iteration=0,
-                 ) -> np.ndarray:
-        '''
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        confidence: np.ndarray,
+        embeddings: np.ndarray,
+        probas: np.ndarray,
+        indices_already_avoided: list,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+        iteration=0,
+    ) -> np.ndarray:
+        """
         In Short: Takes in np.ndarray of chosen sample indices and returns a boolean mask (np.ndarray)
         with False on all the samples that are ok (not HTL) and True on all the samples that are considered HTL.
 
@@ -40,7 +41,7 @@ class FilterStrategy(ABC):
                   List of labels where each label maps by index position to `indices_labeled`.
         :param n: (int) Number of samples to query.
         :return: boolean mask (np.ndarray)
-        '''
+        """
 
 
 class RandomFilter(FilterStrategy):
@@ -48,17 +49,19 @@ class RandomFilter(FilterStrategy):
     Chooses which samples are considered HTL at Random (for Debugging Only)
     """
 
-    def __call__(self,
-                 indices_chosen: np.ndarray,
-                 confidence: np.ndarray,
-                 indices_already_avoided: list,
-                 clf: Classifier,
-                 dataset: Dataset,
-                 indices_unlabeled: np.ndarray,
-                 indices_labeled: np.ndarray,
-                 y: np.ndarray,
-                 n=10) -> np.ndarray:
+    def __call__(
+        self,
+        indices_chosen: np.ndarray,
+        confidence: np.ndarray,
+        indices_already_avoided: list,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: np.ndarray,
+        indices_labeled: np.ndarray,
+        y: np.ndarray,
+        n=10,
+    ) -> np.ndarray:
         a = np.zeros_like(indices_chosen, dtype=bool)
-        a[:len(indices_chosen)//3] = True
+        a[: len(indices_chosen) // 3] = True
         np.random.shuffle(a)
         return a

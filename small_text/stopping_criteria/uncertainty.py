@@ -13,6 +13,7 @@ class OverallUncertainty(StoppingCriterion):
 
     .. versionadded:: 1.1.0
     """
+
     def __init__(self, num_classes, threshold=0.05):
         """
         num_classes : int
@@ -21,19 +22,25 @@ class OverallUncertainty(StoppingCriterion):
             A normalized entropy value below which the criterion indicates to stop.
         """
         if threshold < 0 or threshold >= 1:
-            raise ValueError(f'Threshold must be between 0 (inclusive) and 1 (exclusive), '
-                             f'but got {threshold}.')
+            raise ValueError(
+                f"Threshold must be between 0 (inclusive) and 1 (exclusive), "
+                f"but got {threshold}."
+            )
 
         self.num_classes = num_classes
         self.threshold = threshold
 
         self.last_predictions = None
 
-    def stop(self, active_learner=None, predictions=None, proba=None, indices_stopping=None):
+    def stop(
+        self, active_learner=None, predictions=None, proba=None, indices_stopping=None
+    ):
         if indices_stopping is None:
-            raise ValueError('indices_stopping must not be None')
+            raise ValueError("indices_stopping must not be None")
 
-        prediction_entropy = np.apply_along_axis(lambda x: entropy(x), 1, proba[indices_stopping])
+        prediction_entropy = np.apply_along_axis(
+            lambda x: entropy(x), 1, proba[indices_stopping]
+        )
         normalized_prediction_entropy = prediction_entropy / np.log(self.num_classes)
         normalized_prediction_entropy = np.mean(normalized_prediction_entropy)
 

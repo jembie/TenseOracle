@@ -1,18 +1,18 @@
 from small_text.integrations.pytorch.classifiers.base import (
     PytorchClassifier,
-    PytorchModelSelectionMixin
+    PytorchModelSelectionMixin,
 )
 from small_text.integrations.pytorch.classifiers.factories import KimCNNFactory
 from small_text.integrations.pytorch.classifiers.kimcnn import (
     KimCNNEmbeddingMixin,
-    KimCNNClassifier
+    KimCNNClassifier,
 )
 
 
 __all__ = [
-    'PytorchClassifier',
-    'PytorchModelSelectionMixin',
-    'KimCNNFactory',
-    'KimCNNEmbeddingMixin',
-    'KimCNNClassifier'
+    "PytorchClassifier",
+    "PytorchModelSelectionMixin",
+    "KimCNNFactory",
+    "KimCNNEmbeddingMixin",
+    "KimCNNClassifier",
 ]

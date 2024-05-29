@@ -3,23 +3,30 @@ import comet_ml
 import numpy as np
 from pathlib import Path
 
-class CometExperiment():
+
+class CometExperiment:
     def __init__(self, args, config, task_config):
         self.args = args
         self.config = config
         self.task_config = task_config
         self.workspace = args.comet_workspace
         self.api_key = args.comet_api_key
-        self.project_name = cpn if (cpn := args.comet_project_name) is not None else task_config["task_name"]
+        self.project_name = (
+            cpn
+            if (cpn := args.comet_project_name) is not None
+            else task_config["task_name"]
+        )
         self.cache_adr = config["CACHE_ADR"]
 
         if (not self.api_key) != (not self.workspace):
-            raise Exception(f"""
+            raise Exception(
+                f"""
             Comet API Key is {'not ' if (not self.api_key) else ''}set,
             but the workspace is {'not ' if (not self.api_key) else ''}.
             If you don't want to use comet please set neither 
             or if you do want to use it set both.
-            """)
+            """
+            )
         if self.api_key:
             self.EXPERIMENT = self.setup_comet()
         else:
@@ -27,17 +34,20 @@ class CometExperiment():
 
     def setup_comet(self) -> comet_ml.Experiment:
         # 🤗 creates its own experiment if not set to 'DISABLED'
-        os.environ['COMET_MODE'] = 'DISABLED'
+        os.environ["COMET_MODE"] = "DISABLED"
 
         experiment = comet_ml.Experiment(
             api_key=self.api_key,
             project_name=self.project_name,
-            workspace=self.workspace
+            workspace=self.workspace,
         )
 
         comet_ml.config.set_global_experiment(experiment)
 
-        experiment.add_tag(self.args.filter_strategy_name + ("-full-budget" if self.args.use_up_entire_budget else ""))
+        experiment.add_tag(
+            self.args.filter_strategy_name
+            + ("-full-budget" if self.args.use_up_entire_budget else "")
+        )
 
         # Commit Task Name to differentiate Task when all is sent to the same project
         experiment.log_parameter("task", self.task_config["task_name"])
@@ -61,7 +71,6 @@ class CometExperiment():
             pass
         else:
             self.EXPERIMENT.log_parameters(dictionary)
-
 
     def log_results(self, f1_scores: list, name: str):
         """

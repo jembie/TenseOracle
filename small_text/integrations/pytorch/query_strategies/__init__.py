@@ -2,13 +2,13 @@ from small_text.integrations.pytorch.query_strategies.strategies import (
     BADGE,
     ExpectedGradientLength,
     ExpectedGradientLengthLayer,
-    ExpectedGradientLengthMaxWord
+    ExpectedGradientLengthMaxWord,
 )
 
 
 __all__ = [
-    'BADGE',
-    'ExpectedGradientLength',
-    'ExpectedGradientLengthLayer',
-    'ExpectedGradientLengthMaxWord'
+    "BADGE",
+    "ExpectedGradientLength",
+    "ExpectedGradientLengthLayer",
+    "ExpectedGradientLengthMaxWord",
 ]

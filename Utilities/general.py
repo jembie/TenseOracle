@@ -7,6 +7,7 @@ from transformers import TrainerCallback
 import csv
 import os
 
+
 def set_random_seed(seed):
     # set random seed
     torch.manual_seed(seed)
@@ -16,11 +17,12 @@ def set_random_seed(seed):
     random.seed(seed)
 
 
-
-class SmallTextCartographer():
-    def __init__(self, dataset: TransformersDataset,
-                 outputs_to_probabilities: Callable = None,
-                 ):
+class SmallTextCartographer:
+    def __init__(
+        self,
+        dataset: TransformersDataset,
+        outputs_to_probabilities: Callable = None,
+    ):
         """
         :param dataset: Dataset. Usually, as the paper suggests, this is the training dataset. It should be:
              - Non-shuffled, so each iteration over the dataset should yield samples in the same order
@@ -37,7 +39,6 @@ class SmallTextCartographer():
         self._gold_labels_probabilities = []
         self._gold_label_hits = []
         self.outputs2probabilities = outputs_to_probabilities
-
 
     def process_predictions(self, probabilities):
         # Convert outputs to probabilities if necessary
@@ -56,7 +57,6 @@ class SmallTextCartographer():
         gold_hits = np.expand_dims(gold_hits, axis=-1)
         self._gold_label_hits.append(gold_hits)
         return
-
 
     @property
     def gold_labels_probabilities(self) -> np.ndarray:
@@ -91,7 +91,6 @@ class SmallTextCartographer():
         """
         return np.mean(np.hstack(self._gold_label_hits), axis=-1)
 
-
     def on_epoch_end(self, clf: Classifier):
         predictions = clf.predict(self.dataset, return_proba=True)
         probabilities = predictions[1]
@@ -109,12 +108,12 @@ def log_failed_attempts(seed, config_name, filter_name, log_adr):
     :param file_name:
     :return:
     """
-    file_name = log_adr + '/gpu_less_runs.csv'
+    file_name = log_adr + "/gpu_less_runs.csv"
     if not os.path.exists(file_name):
-        with open(file_name, 'w', newline='') as file:
+        with open(file_name, "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(['SEED', 'CONFIG_NAME', 'FILTER'])
+            writer.writerow(["SEED", "CONFIG_NAME", "FILTER"])
 
-    with open(file_name, 'a', newline='') as file:
+    with open(file_name, "a", newline="") as file:
         writer = csv.writer(file)
         writer.writerow([seed, config_name, filter_name])
