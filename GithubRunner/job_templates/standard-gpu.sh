@@ -27,9 +27,9 @@ sleep $(($SLURM_ARRAY_TASK_ID * 10))
 strategy_name=[strategy]
 filter_strategy_name=[filter_strategy]
 slurm_id=${SLURM_ARRAY_TASK_ID} #TODO Set to array id
-telegram_user_id=817154082
-telegram_bot_token=6020310637:AAGmoymdbNe4olnpAQ8tGK9lwMFPTRS0aNU
-comet_api_key=Z7zhSkfHKCsYmlZcaG8x5ssqJ
+telegram_user_id=
+telegram_bot_token=
+comet_api_key=
 comet_project_name=[comet_project]
 comet_workspace=jimmy-ml
 time_limit=$(squeue -j ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} -o "%L" --noheader)

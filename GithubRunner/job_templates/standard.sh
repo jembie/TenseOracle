@@ -17,7 +17,7 @@ source /lustre/ssd/ws/toma076c-SHK/venv/bin/activate
 
 strategy_name=[strategy]
 filter_strategy_name=[filter_strategy]
-comet_api_key=uz7UiNA5wcwL9Ccqtu7DLhKCa
+comet_api_key=
 comet_workspace=active-learning-filters
 random_seed=$((42 + ${SLURM_ARRAY_TASK_ID}))
 task_config="./Configs/Tasks/${CONFIG_NAME}.json"
