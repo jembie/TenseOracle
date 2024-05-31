@@ -76,11 +76,10 @@ class LocalOutlierFactorFilter(FilterStrategy):
 
         number_of_labels = len(dataset.y)
         print("number of labels: ", number_of_labels)
-        boolean_mask = detect_outliers(
-            filter_strategy=LocalOutlierFactor(n_neighbors=number_of_labels),
-            embeddings=embeddings,
-            indices_chosen=indices_chosen,
-        )
+        predictions = LocalOutlierFactor.fit_predict(embeddings)
+        filtered_predictions = predictions[indices_chosen]
+
+        boolean_mask = filtered_predictions == 1
 
         return boolean_mask
 
