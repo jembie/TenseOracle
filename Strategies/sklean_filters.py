@@ -26,7 +26,12 @@ class IsolationForestFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        pass
+        isolation_forest = IsolationForest(random_state=0).fit(embeddings)
+        chosen_data = embeddings[indices_chosen]
+        prediction = isolation_forest.predict(chosen_data)
+
+        boolean_prediction = (prediction == 1)
+        return boolean_prediction
 
 
 class LocalOutlierFactorFilter(FilterStrategy):
