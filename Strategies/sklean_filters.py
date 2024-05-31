@@ -1,4 +1,5 @@
 from numpy import ndarray
+
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import SGDOneClassSVM
@@ -10,7 +11,23 @@ from small_text.data.datasets import Dataset
 from Strategies.filters import FilterStrategy
 
 
+def detect_outliers(
+    filter_strategy: FilterStrategy, embeddings: ndarray, indices_chosen: ndarray
+) -> ndarray:
+    outlier_classifier = filter_strategy.fit(embeddings)
+    chosen_data = embeddings[indices_chosen]
+    prediction = outlier_classifier.predict(chosen_data)
+
+    boolean_mask = prediction == 1
+    return boolean_mask
+
+
 class IsolationForestFilter(FilterStrategy):
+
+    def __init__(self, seed: int, **kwargs):
+        super().__init__(**kwargs)
+        self.seed = seed
+
     def __call__(
         self,
         indices_chosen: ndarray,
@@ -26,15 +43,21 @@ class IsolationForestFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        isolation_forest = IsolationForest(random_state=0).fit(embeddings)
-        chosen_data = embeddings[indices_chosen]
-        prediction = isolation_forest.predict(chosen_data)
 
-        boolean_prediction = (prediction == 1)
-        return boolean_prediction
+        boolean_mask = detect_outliers(
+            IsolationForest(random_state=self.seed),
+            embeddings=embeddings,
+            indices_chosen=indices_chosen,
+        )
+        return boolean_mask
 
 
 class LocalOutlierFactorFilter(FilterStrategy):
+
+    def __init__(self, seed: int, **kwargs):
+        super().__init__(**kwargs)
+        self.seed = seed
+
     def __call__(
         self,
         indices_chosen: ndarray,
@@ -50,10 +73,24 @@ class LocalOutlierFactorFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        pass
+
+        number_of_labels = len(dataset.y)
+        print("number of labels: ", number_of_labels)
+        boolean_mask = detect_outliers(
+            filter_strategy=LocalOutlierFactor(n_neighbors=number_of_labels),
+            embeddings=embeddings,
+            indices_chosen=indices_chosen,
+        )
+
+        return boolean_mask
 
 
 class SGDOneClassSVMFilter(FilterStrategy):
+
+    def __init__(self, seed: int, **kwargs):
+        super().__init__(**kwargs)
+        self.seed = seed
+
     def __call__(
         self,
         indices_chosen: ndarray,
@@ -69,10 +106,22 @@ class SGDOneClassSVMFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        pass
+
+        boolean_mask = detect_outliers(
+            filter_strategy=SGDOneClassSVM(random_state=self.seed),
+            embeddings=embeddings,
+            indices_chosen=indices_chosen,
+        )
+
+        return boolean_mask
 
 
 class OneClassSVMFilter(FilterStrategy):
+
+    def __init__(self, seed: int, **kwargs):
+        super().__init__(**kwargs)
+        self.seed = seed
+
     def __call__(
         self,
         indices_chosen: ndarray,
@@ -88,10 +137,22 @@ class OneClassSVMFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        pass
+
+        boolean_mask = detect_outliers(
+            filter_strategy=OneClassSVM(),
+            embeddings=embeddings,
+            indices_chosen=indices_chosen,
+        )
+
+        return boolean_mask
 
 
 class EllipticEnvelopeFilter(FilterStrategy):
+
+    def __init__(self, seed: int, **kwargs):
+        super().__init__(**kwargs)
+        self.seed = seed
+
     def __call__(
         self,
         indices_chosen: ndarray,
@@ -107,4 +168,11 @@ class EllipticEnvelopeFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        pass
+
+        boolean_mask = detect_outliers(
+            filter_strategy=EllipticEnvelope(random_state=self.seed),
+            embeddings=embeddings,
+            indices_chosen=indices_chosen,
+        )
+
+        return boolean_mask
