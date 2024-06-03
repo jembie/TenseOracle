@@ -74,9 +74,10 @@ class LocalOutlierFactorFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
 
-        number_of_labels = len(dataset.y)
+        number_of_labels = len(set(dataset.y))
         print("number of labels: ", number_of_labels)
-        predictions = LocalOutlierFactor.fit_predict(embeddings)
+        local_outlier = LocalOutlierFactor(n_neighbors=number_of_labels)
+        predictions = local_outlier.fit_predict(embeddings)
         filtered_predictions = predictions[indices_chosen]
 
         boolean_mask = filtered_predictions == 1
