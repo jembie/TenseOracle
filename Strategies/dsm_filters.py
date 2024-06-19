@@ -215,8 +215,9 @@ class LoserFilter_Plain(FilterStrategy):
         )
         val_set = diverse_labelled_dataset[:10].clone()
         val_set.y = np.array(diverse_labelled_dataset.y[:10], dtype=np.int64)
+
         # Train Model
-        for i in range(10):
+        for _ in range(10):
             torch.cuda.empty_cache()
             pseudo_clf = self.clf_factory.new()
             pseudo_clf.num_epochs = 5

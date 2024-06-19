@@ -19,7 +19,7 @@ def detect_outliers(
     chosen_data = embeddings[indices_chosen]
     prediction = outlier_classifier.predict(chosen_data)
 
-    boolean_mask = prediction >= 0
+    boolean_mask = prediction < 0
     return boolean_mask
 
 
@@ -46,7 +46,7 @@ class IsolationForestFilter(FilterStrategy):
     ) -> ndarray:
 
         boolean_mask = detect_outliers(
-            IsolationForest(random_state=self.seed),
+            filter_strategy=IsolationForest(random_state=self.seed),
             embeddings=embeddings,
             indices_chosen=indices_chosen,
         )
@@ -75,13 +75,11 @@ class LocalOutlierFactorFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
 
-        number_of_labels = len(set(dataset.y))
-        print("number of labels: ", number_of_labels)
-        local_outlier = LocalOutlierFactor(n_neighbors=number_of_labels)
-        predictions = local_outlier.fit_predict(embeddings)
-        filtered_predictions = predictions[indices_chosen]
-
-        boolean_mask = filtered_predictions == 1
+        boolean_mask = detect_outliers(
+            filter_strategy=LocalOutlierFactor(),
+            embeddings=embeddings,
+            indices_chosen=indices_chosen,
+        )
 
         return boolean_mask
 

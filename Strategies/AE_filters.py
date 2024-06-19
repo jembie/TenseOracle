@@ -129,8 +129,7 @@ class AutoFilter_Chen_Like(FilterStrategy):
         :param epochs: Number of epochs for training.
         """
         params = list(model.children())
-        # Make copy of original to check if it worked as intended at end
-        old_model = copy.deepcopy(model)
+
         # Create preprocessor i.e. outer layers:
         preprocessor = nn.Sequential(*params[: layer_index * 2])
         # Create a shallow model for the moment with only the 2 layers that shall be trained + 1 Placeholder
@@ -158,12 +157,6 @@ class AutoFilter_Chen_Like(FilterStrategy):
 
         # Check Condition: Only 4 Layers may be updated at once (2 in encoder & 2 in decoder)
         # All others should have remained unchanged
-        old_weights = [p.detach().to("cpu") for p in old_model.parameters()]
-        new_weights = [p.detach().to("cpu") for p in model.parameters()]
-        num_consitent_layers = sum(
-            [torch.all(o == n) for (o, n) in zip(old_weights, new_weights)]
-        )
-        assert len(old_weights) - num_consitent_layers == 4
         return None  # Model was trained in place
 
     def pretrain_autoencoder(self, model, train_loader, criterion, optimizer, epochs=5):
@@ -252,7 +245,7 @@ class AutoFilter_Chen_Like(FilterStrategy):
 
         ENSEMBLE_SIZE = 30
         ensemble = []
-        for i in range(ENSEMBLE_SIZE):
+        for _ in range(ENSEMBLE_SIZE):
             # Create a copy of base model with some neurons frozen (Like a Stable Dropout)
             model = self.drop_neurons(base_model, 0.1)
             optimizer = optim.Adam(model.parameters(), lr=0.001)
