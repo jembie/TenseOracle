@@ -21,6 +21,7 @@ from Strategies.sklean_filters import (
     LocalOutlierFactorFilter,
     OneClassSVMFilter,
     SGDOneClassSVMFilter,
+    HDBScanFilter
 )
 
 # ======= Only use these filters for experiments =======
