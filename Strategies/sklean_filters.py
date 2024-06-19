@@ -75,11 +75,11 @@ class LocalOutlierFactorFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
 
-        boolean_mask = detect_outliers(
-            filter_strategy=LocalOutlierFactor(),
-            embeddings=embeddings,
-            indices_chosen=indices_chosen,
-        )
+        lof = LocalOutlierFactor()
+        data = lof.fit_predict(embeddings)
+        chosen_data = data[indices_chosen]
+
+        boolean_mask = chosen_data < 0
 
         return boolean_mask
 
