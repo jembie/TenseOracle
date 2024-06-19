@@ -201,10 +201,8 @@ class HDBScanFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
 
-        boolean_mask = detect_outliers(
-            filter_strategy=HDBSCAN(),
-            embeddings=embeddings,
-            indices_chosen=indices_chosen
-        )
+        hdb = HDBSCAN()
+        hdb.fit(embeddings)
+        labels = (hdb.labels_ >= 0)
 
-        return boolean_mask
+        return labels[indices_chosen]
