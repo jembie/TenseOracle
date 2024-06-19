@@ -5,6 +5,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import SGDOneClassSVM
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
+from sklearn.cluster import HDBSCAN
 
 from small_text.classifiers.classification import Classifier
 from small_text.data.datasets import Dataset
@@ -18,7 +19,7 @@ def detect_outliers(
     chosen_data = embeddings[indices_chosen]
     prediction = outlier_classifier.predict(chosen_data)
 
-    boolean_mask = prediction == 1
+    boolean_mask = prediction >= 0
     return boolean_mask
 
 
@@ -173,6 +174,37 @@ class EllipticEnvelopeFilter(FilterStrategy):
             filter_strategy=EllipticEnvelope(random_state=self.seed),
             embeddings=embeddings,
             indices_chosen=indices_chosen,
+        )
+
+        return boolean_mask
+
+
+class HDBScanFilter(FilterStrategy):
+
+    def __init__(self, seed: int, **kwargs):
+        super().__init__(**kwargs)
+        self.seed = seed
+
+    def __call__(
+        self,
+        indices_chosen: ndarray,
+        confidence: ndarray,
+        embeddings: ndarray,
+        probas: ndarray,
+        indices_already_avoided: list,
+        clf: Classifier,
+        dataset: Dataset,
+        indices_unlabeled: ndarray,
+        indices_labeled: ndarray,
+        y: ndarray,
+        n=10,
+        iteration=0,
+    ) -> ndarray:
+
+        boolean_mask = detect_outliers(
+            filter_strategy=HDBSCAN(),
+            embeddings=embeddings,
+            indices_chosen=indices_chosen
         )
 
         return boolean_mask
