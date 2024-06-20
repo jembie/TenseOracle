@@ -201,6 +201,6 @@ class HDBScanFilter(FilterStrategy):
 
         hdb = HDBSCAN()
         hdb.fit(embeddings)
-        labels = (hdb.labels_ <= 0)
+        labels = (hdb.labels_ < 0)
 
         return labels[indices_chosen]
