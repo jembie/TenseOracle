@@ -229,7 +229,7 @@ class LoserFilter_Plain(FilterStrategy):
         std = np.std(cartographer.correctness)
         threshold = m - 2 * std
         # Which of the chosen Samples are exceptionally hard to predict?
-        htl_mask = cartographer.correctness[: len(indices_chosen)] <= threshold
+        htl_mask = cartographer.correctness[:len(indices_chosen)] <= threshold
 
         return htl_mask
 
