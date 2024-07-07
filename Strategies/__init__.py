@@ -30,7 +30,7 @@ from Strategies.sklean_filters import (
 SimpleDSM = LoserFilter_Plain 
 
 # LSTM = Long Short Term Memory, AE = Auto Encoder
-SyntacticAE = AutoFilter_LSTM_SIMPLE # 
+SyntacticAE = AutoFilter_LSTM_SIMPLE # DO NOT USE FOR EVALUATION
 
 SemanticAE = AutoFilter_Chen_Like
 
