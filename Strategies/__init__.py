@@ -27,10 +27,10 @@ from Strategies.sklean_filters import (
 # ======= Only use these filters for experiments =======
 
 # Create synonymous meaning for filters
-SimpleDSM = LoserFilter_Plain
+SimpleDSM = LoserFilter_Plain 
 
 # LSTM = Long Short Term Memory, AE = Auto Encoder
-SyntacticAE = AutoFilter_LSTM_SIMPLE
+SyntacticAE = AutoFilter_LSTM_SIMPLE # 
 
 SemanticAE = AutoFilter_Chen_Like
 

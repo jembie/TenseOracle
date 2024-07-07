@@ -193,20 +193,22 @@ class LoserFilter_Plain(FilterStrategy):
 
         # convert to np.array
         predictions_over_time = np.array(self.predictions_over_time)
-        votes = np.argmax(predictions_over_time, axis=2)
-        pseudo_labels = [
-            np.argmax(
-                np.bincount(votes[:, i], weights=np.arange(1, votes.shape[0] + 1))
-            )
-            for i in indices_chosen
-        ]
+
+        # votes = np.argmax(predictions_over_time, axis=2)
+        # pseudo_labels = [
+        #     np.argmax(
+        #         np.bincount(votes[:, i], weights=np.arange(1, votes.shape[0] + 1))
+        #     )
+        #     for i in indices_chosen
+        # ]
+        pseudo_labels = np.argmax(np.average(predictions_over_time[-3:], axis=0), axis=1)
 
         # Entire Labelled & Pseudo Labeled dataset for Training
         diverse_labelled_dataset = dataset[
             np.concatenate([indices_chosen, indices_labeled])
         ].clone()
         diverse_labelled_dataset.y = np.concatenate(
-            [pseudo_labels, y], axis=0, dtype=np.int64
+            [pseudo_labels[indices_chosen], y], axis=0, dtype=np.int64
         )
 
         # We also track already labeled data to establish a baseline of what we consider weird

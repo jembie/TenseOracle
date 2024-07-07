@@ -19,7 +19,6 @@ def detect_outliers(
     prediction = outlier_classifier.predict(embeddings)
 
     boolean_mask = prediction < 0
-    print(f"Total Outliers detected for: {filter_strategy.__class__} {sum(boolean_mask) / len(boolean_mask)}")
 
     return boolean_mask[indices_chosen]
 
@@ -47,7 +46,7 @@ class IsolationForestFilter(FilterStrategy):
     ) -> ndarray:
 
         boolean_mask = detect_outliers(
-            filter_strategy=IsolationForest(random_state=self.seed),
+            filter_strategy=IsolationForest(n_estimators=400, random_state=self.seed, max_samples=int(len(embeddings))),
             embeddings=embeddings,
             indices_chosen=indices_chosen,
         )
@@ -77,13 +76,11 @@ class LocalOutlierFactorFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
 
-        lof = LocalOutlierFactor()
+        lof = LocalOutlierFactor(metric="cosine")
         data = lof.fit_predict(embeddings)
         chosen_data = data[indices_chosen]
 
         boolean_mask = chosen_data < 0
-        print(f"Total Outliers detected for: LocalOutlierFactor {sum(boolean_mask) / len(boolean_mask)}")
-
         return boolean_mask
 
 
@@ -202,7 +199,7 @@ class HDBScanFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
 
-        hdb = HDBSCAN()
+        hdb = HDBSCAN(metric="cosine")
         hdb.fit(embeddings)
         labels = (hdb.labels_ < 0)
         print(f"Total Outliers detected for: HDBScan {sum(labels) / len(labels)}")
