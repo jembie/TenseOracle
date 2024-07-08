@@ -49,30 +49,33 @@ def compare_datasets(
     unused_budget = len(indices_htl)
 
     def replace_htl_with_random(indices_unlabeled):
+        # TODO remove HTL samples
+        indices_labeled_no_htl = np.setdiff1d(indices_labeled, indices_htl)
+
         random_replacement_for_htl = np.random.choice(
             indices_unlabeled, unused_budget, replace=False
         ).astype(np.int64)
         indices_labeled_backup = np.concatenate(
-            (indices_labeled, random_replacement_for_htl), axis=0, dtype=np.int64
+            (indices_labeled_no_htl, random_replacement_for_htl), axis=0, dtype=np.int64
         )
+        assert len(indices_labeled_backup) == len(indices_labeled)
         return indices_labeled_backup
 
     for experiment_name in ["no_htl", "htl", "random"]:
         print(experiment_name)
         if experiment_name == "no_htl":
-            # Evaluate without any HTL (i.e. fewer samples but higher quality we assume)
-            indices_labeled_backup = copy.deepcopy(indices_labeled)
+            # Remove THTLs to  Evaluate without any of the marked HTL (i.e. fewer samples but higher quality we assume)
+            indices_labeled_backup = np.setdiff1d(indices_labeled, indices_htl)
+            assert len(indices_labeled_backup) + len(indices_htl) == len(indices_labeled)
         elif experiment_name == "random":
             # Low Bar: Evaluate with random replacement for HTL
             # We Assume: Same size as with HTL but higher quality
             # Random Replacement is done after each iteration as well
             indices_labeled_backup = replace_htl_with_random(indices_unlabeled)
         elif experiment_name == "htl":
-            # The dataset as requested if Filter not active (probably)
+            # The dataset as requested if Filter not active
             # We assume: Worse due to HTL samples
-            indices_labeled_backup = np.concatenate(
-                (indices_labeled, indices_htl), axis=0
-            )
+            indices_labeled_backup = copy.deepcopy(indices_labeled)
         else:
             raise NotImplementedError(
                 f"Experiment with name {experiment_name} is not yet implemented"

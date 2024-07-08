@@ -81,7 +81,7 @@ class HTLOverseer(QueryStrategy):
         # Add HTL samples to HTL tracker
         self.htl_tracker += list(chosen_samples[htl_mask])
 
-        return chosen_samples[~htl_mask]
+        return chosen_samples#[~htl_mask]
 
     def __repr__(self):
         return f"HTLOverseer({str(self.filter_strategy)}, {str(self.query_strategy)})"
