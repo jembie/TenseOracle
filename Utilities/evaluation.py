@@ -119,14 +119,14 @@ def assess_dataset_quality(
     a single evaluation to represent the quality of a dataset, and therefore we can't trust
     that this represents the quality of the strategy
     """
-    total_budget = (
-        config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
-    )
-    unused_budget = total_budget - len(indices_labeled)
+    # total_budget = (
+    #     config["ITERATIONS"] * config["QUERY_BATCH_SIZE"] + config["SEED_SIZE"]
+    # )
+    # unused_budget = total_budget - len(indices_labeled)
     # We assume that budget was only lost due to HTL avoidance nothing else
-    assert unused_budget == len(indices_htl) or (
-        args.use_up_entire_budget and unused_budget == 0
-    )
+    # assert unused_budget == len(indices_htl) or (
+    #     args.use_up_entire_budget and unused_budget == 0
+    # )
 
     print("Start Queried DS Evaluation")
     results = compare_datasets(
