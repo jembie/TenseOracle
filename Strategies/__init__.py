@@ -16,18 +16,15 @@ from Strategies.LE_filters import (
 )
 from Strategies.other_filters import SingleStepEntropy, SingleStepEntropy_SimplePseudo
 from Strategies.sklean_filters import (
-    EllipticEnvelopeFilter,
     IsolationForestFilter,
     LocalOutlierFactorFilter,
-    OneClassSVMFilter,
-    SGDOneClassSVMFilter,
     HDBScanFilter
 )
 
 # ======= Only use these filters for experiments =======
 
 # Create synonymous meaning for filters
-SimpleDSM = LoserFilter_Plain 
+SimpleDSM = LoserFilter_Plain
 
 # LSTM = Long Short Term Memory, AE = Auto Encoder
 SyntacticAE = AutoFilter_LSTM_SIMPLE # DO NOT USE FOR EVALUATION
