@@ -17,6 +17,7 @@ class CometExperiment:
             else task_config["task_name"]
         )
         self.cache_adr = config["CACHE_ADR"]
+        self.filter_strategy_name = None
 
         if (not self.api_key) != (not self.workspace):
             raise Exception(
@@ -44,17 +45,21 @@ class CometExperiment:
 
         comet_ml.config.set_global_experiment(experiment)
 
-        experiment.add_tag(
-            self.args.filter_strategy_name
-            + ("-full-budget" if self.args.use_up_entire_budget else "")
+        self.filter_strategy_name = (
+            ' '.join(self.args.filter_strategy_name)
+            if isinstance(self.args.filter_strategy_name, list)
+            else self.args.filter_strategy_name
         )
 
+        experiment.add_tag(
+            self.filter_strategy_name + ("-full-budget" if self.args.use_up_entire_budget else "")
+        )
         # Commit Task Name to differentiate Task when all is sent to the same project
         experiment.log_parameter("task", self.task_config["task_name"])
         experiment.log_parameter("config", self.args.experiment_config)
         experiment.log_parameter("seed", self.args.random_seed)
         experiment.log_parameter("strategy_name", self.args.strategy_name)
-        experiment.log_parameter("filter_strategy_name", self.args.filter_strategy_name)
+        experiment.log_parameter("filter_strategy_name", self.filter_strategy_name)
         experiment.log_parameter("eval_iter", self.config["SET_EVAL_ITERATIONS"])
         experiment.log_parameter("model", self.config["MODEL_NAME"])
 

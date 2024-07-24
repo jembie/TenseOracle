@@ -16,6 +16,7 @@ import copy
 import torch
 import numpy as np
 from Utilities.general import set_random_seed, log_failed_attempts
+import pprint
 
 
 def main():
@@ -52,31 +53,37 @@ def main():
     indices_htl = (
         active_learner.query_strategy.indices_htl
     )  # htl - Hard To Learn (i.e. Outlier)
-    indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)
-    indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
 
-    # Evaluate whether avoided samples indeed hurt performance
-    set_performance = assess_dataset_quality(
-        active_learner=active_learner,
-        train=train,
-        indices_labeled=indices_labeled,
-        indices_unlabeled=indices_unused,
-        indices_htl=indices_htl,
-        test=test,
-        config=config,
-        args=args,
-        experiment=experiment,
-    )
+    filter_strategies = experiment.filter_strategy_name.split()
+    pprint.pprint(indices_htl)
 
-    # Log Results to Comet
-    metrics_to_log = {
-        "avg_duration": sum(tt := active_learner.query_strategy.time_tracker) / len(tt),
-        **set_performance,
-    }
-    experiment.log_metrics(metrics_to_log)
-    experiment.log_results(
-        np.array(active_learner.query_strategy.time_tracker), "durations"
-    )
+    for filter_strategy in filter_strategies:
+
+        indices_used = np.concatenate((indices_labeled, indices_htl[filter_strategy]), axis=0)
+        indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
+
+        # Evaluate whether avoided samples indeed hurt performance
+        set_performance = assess_dataset_quality(
+            active_learner=active_learner,
+            train=train,
+            indices_labeled=indices_labeled,
+            indices_unlabeled=indices_unused,
+            indices_htl=indices_htl,
+            test=test,
+            config=config,
+            args=args,
+            experiment=experiment,
+        )
+
+        # Log Results to Comet
+        metrics_to_log = {
+            "avg_duration": sum(tt := active_learner.query_strategy.time_tracker) / len(tt),
+            **set_performance,
+        }
+        experiment.log_metrics(metrics_to_log)
+        experiment.log_results(
+            np.array(active_learner.query_strategy.time_tracker), "durations"
+        )
 
     return
 

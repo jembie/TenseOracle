@@ -6,6 +6,8 @@ import copy
 from tqdm.auto import tqdm
 import deepsig
 from sklearn.metrics import f1_score
+from typing import Dict, List
+from collections import defaultdict
 
 
 def evaluate(active_learner, test):
@@ -26,7 +28,7 @@ def compare_datasets(
     indices_htl,
     iterations,
     random_seed,
-) -> dict:
+) -> Dict[str, Dict[str, List]]:
     """
     Combines Labeled, found HTL, and unlabeled data into 3 variants.
     Labeled Data, Labeled Data with HTL Samples,
@@ -45,62 +47,64 @@ def compare_datasets(
     :param random_seed:
     :return:
     """
-    results = {}
-    unused_budget = len(indices_htl)
+    results = defaultdict(defaultdict(list))
+    for strategy, htl_mask_indices in indices_htl.items():
+        print(f"In compare datasets \n Strategy: {strategy} for \n {indices_htl}")
+        unused_budget = len(htl_mask_indices)
 
-    def replace_htl_with_random(indices_unlabeled):
-        # TODO remove HTL samples
-        indices_labeled_no_htl = np.setdiff1d(indices_labeled, indices_htl)
+        def replace_htl_with_random(indices_unlabeled):
+            # TODO remove HTL samples
+            indices_labeled_no_htl = np.setdiff1d(indices_labeled, htl_mask_indices)
 
-        random_replacement_for_htl = np.random.choice(
-            indices_unlabeled, unused_budget, replace=False
-        ).astype(np.int64)
-        indices_labeled_backup = np.concatenate(
-            (indices_labeled_no_htl, random_replacement_for_htl), axis=0, dtype=np.int64
-        )
-        assert len(indices_labeled_backup) == len(indices_labeled)
-        return indices_labeled_backup
-
-    for experiment_name in ["no_htl", "htl", "random"]:
-        print(experiment_name)
-        if experiment_name == "no_htl":
-            # Remove THTLs to  Evaluate without any of the marked HTL (i.e. fewer samples but higher quality we assume)
-            indices_labeled_backup = np.setdiff1d(indices_labeled, indices_htl)
-            assert len(indices_labeled_backup) + len(indices_htl) == len(indices_labeled)
-        elif experiment_name == "random":
-            # Low Bar: Evaluate with random replacement for HTL
-            # We Assume: Same size as with HTL but higher quality
-            # Random Replacement is done after each iteration as well
-            indices_labeled_backup = replace_htl_with_random(indices_unlabeled)
-        elif experiment_name == "htl":
-            # The dataset as requested if Filter not active
-            # We assume: Worse due to HTL samples
-            indices_labeled_backup = copy.deepcopy(indices_labeled)
-        else:
-            raise NotImplementedError(
-                f"Experiment with name {experiment_name} is not yet implemented"
+            random_replacement_for_htl = np.random.choice(
+                indices_unlabeled, unused_budget, replace=False
+            ).astype(np.int64)
+            indices_labeled_backup = np.concatenate(
+                (indices_labeled_no_htl, random_replacement_for_htl), axis=0, dtype=np.int64
             )
+            assert len(indices_labeled_backup) == len(indices_labeled)
+            return indices_labeled_backup
 
-        results[experiment_name] = []
-        for i in tqdm(range(iterations)):
-            # Bring in diversity by setting diff seed each time
-            set_random_seed(random_seed + i)
-            # Shuffle Dataset each time to get better evaluation
-            indices_labeled_ = copy.copy(indices_labeled_backup).astype(
-                np.int64
-            )  # make copy to not shuffle original
-            np.random.shuffle(indices_labeled_)
-
-            y_initial = train.y[indices_labeled_].astype(np.int64)
-            active_learner.initialize_data(indices_labeled_, y_initial, retrain=True)
-            r = evaluate(active_learner, test)
-            results[experiment_name].append(r)
-
-            # Use different replacements for HTL in next test if in "random" mode
-            if experiment_name == "random":
+        for experiment_name in ["no_htl", "htl", "random"]:
+            print(experiment_name)
+            if experiment_name == "no_htl":
+                # Remove THTLs to  Evaluate without any of the marked HTL (i.e. fewer samples but higher quality we assume)
+                indices_labeled_backup = np.setdiff1d(indices_labeled, htl_mask_indices)
+                assert len(indices_labeled_backup) + len(htl_mask_indices) == len(indices_labeled)
+            elif experiment_name == "random":
+                # Low Bar: Evaluate with random replacement for HTL
+                # We Assume: Same size as with HTL but higher quality
+                # Random Replacement is done after each iteration as well
                 indices_labeled_backup = replace_htl_with_random(indices_unlabeled)
+            elif experiment_name == "htl":
+                # The dataset as requested if Filter not active
+                # We assume: Worse due to HTL samples
+                indices_labeled_backup = copy.deepcopy(indices_labeled)
+            else:
+                raise NotImplementedError(
+                    f"Experiment with name {experiment_name} is not yet implemented"
+                )
 
-    return results
+            results[strategy][experiment_name] = []
+            for i in tqdm(range(iterations)):
+                # Bring in diversity by setting diff seed each time
+                set_random_seed(random_seed + i)
+                # Shuffle Dataset each time to get better evaluation
+                indices_labeled_ = copy.copy(indices_labeled_backup).astype(
+                    np.int64
+                )  # make copy to not shuffle original
+                np.random.shuffle(indices_labeled_)
+
+                y_initial = train.y[indices_labeled_].astype(np.int64)
+                active_learner.initialize_data(indices_labeled_, y_initial, retrain=True)
+                r = evaluate(active_learner, test)
+                results[strategy][experiment_name].append(r)
+
+                # Use different replacements for HTL in next test if in "random" mode
+                if experiment_name == "random":
+                    indices_labeled_backup = replace_htl_with_random(indices_unlabeled)
+
+        return results
 
 
 def assess_dataset_quality(
@@ -140,33 +144,38 @@ def assess_dataset_quality(
         random_seed=args.random_seed,
     )
 
-    for experiment_name in results.keys():
-        experiment.log_results(results[experiment_name], experiment_name)
+    final_results = {}
+    for strategy, experiments in results.items():
+        for outlier_experiment in experiments:
+            experiment.log_results(results[strategy][outlier_experiment], strategy)
 
-    # Collect all Statistics
-    median_no_htl = np.median(np.array(results["no_htl"]))
-    median_with_htl = np.median(np.array(results["htl"]))
-    median_replacement = np.median(np.array(results["random"]))
+        # Collect all Statistics
+        median_no_htl = np.median(np.array(results[strategy]["no_htl"]))
+        median_with_htl = np.median(np.array(results[strategy]["htl"]))
+        median_replacement = np.median(np.array(results[strategy]["random"]))
 
-    final_results = {
-        "avgF1 (No HTL)": sum(results["no_htl"]) / len(results["no_htl"]),
-        "avgF1 (With HTL)": sum(results["htl"]) / len(results["htl"]),
-        "avgF1 (random replacement)": sum(results["random"]) / len(results["random"]),
-        "medF1 (No HTL)": median_no_htl,
-        "medF1 (With HTL)": median_with_htl,
-        "medF1 (random replacement)": median_replacement,
-        "HTL Count": len(indices_htl),
-        "ASO-Sig[1]": deepsig.aso(
-            results["no_htl"], results["htl"], seed=args.random_seed
-        ),
-        "ASO-Sig[2]": deepsig.aso(
-            results["random"], results["htl"], seed=args.random_seed
-        ),
-        "HTL_harms_median": median_no_htl - median_with_htl,
-        "HTL_low_val_median": median_replacement - median_with_htl,
-    }
+        tmp = {
+                strategy : "", # <-- Just to have the Strategy shown in the logs for better readability
+                "avgF1 (No HTL)": sum(results[strategy]["no_htl"]) / len(results[strategy]["no_htl"]),
+                "avgF1 (With HTL)": sum(results[strategy]["htl"]) / len(results[strategy]["htl"]),
+                "avgF1 (random replacement)": sum(results[strategy]["random"]) / len(results[strategy]["random"]),
+                "medF1 (No HTL)": median_no_htl,
+                "medF1 (With HTL)": median_with_htl,
+                "medF1 (random replacement)": median_replacement,
+                "HTL Count": len(indices_htl),
+                "ASO-Sig[1]": deepsig.aso(
+                    results[strategy]["no_htl"], results[strategy]["htl"], seed=args.random_seed
+                ),
+                "ASO-Sig[2]": deepsig.aso(
+                    results[strategy]["random"], results[strategy]["htl"], seed=args.random_seed
+                ),
+                "HTL_harms_median": median_no_htl - median_with_htl,
+                "HTL_low_val_median": median_replacement - median_with_htl,
+        }
 
-    # TODO Commit all results to Comet for later in depth eval
+        final_results[strategy] = tmp
+
+        # TODO Commit all results to Comet for later in depth eval
 
     return final_results
 
