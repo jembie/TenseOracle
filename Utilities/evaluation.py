@@ -47,7 +47,7 @@ def compare_datasets(
     :param random_seed:
     :return:
     """
-    results = defaultdict(defaultdict(list))
+    results = defaultdict(lambda: defaultdict(list))
     for strategy, htl_mask_indices in indices_htl.items():
         print(f"In compare datasets \n Strategy: {strategy} for \n {indices_htl}")
         unused_budget = len(htl_mask_indices)
@@ -85,7 +85,6 @@ def compare_datasets(
                     f"Experiment with name {experiment_name} is not yet implemented"
                 )
 
-            results[strategy][experiment_name] = []
             for i in tqdm(range(iterations)):
                 # Bring in diversity by setting diff seed each time
                 set_random_seed(random_seed + i)
