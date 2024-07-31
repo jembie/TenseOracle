@@ -73,13 +73,15 @@ def main():
             config=config,
             args=args,
             experiment=experiment,
+            filter_strategy=filter_strategy
         )
 
         # Log Results to Comet
         metrics_to_log = {
             "avg_duration": sum(tt := active_learner.query_strategy.time_tracker) / len(tt),
-            **set_performance,
+            **{f"{metric_name}" : metric_value for strategy, experiments in set_performance.item() for metric_name, metric_value in experiments.items()},
         }
+
         experiment.log_metrics(metrics_to_log)
         experiment.log_results(
             np.array(active_learner.query_strategy.time_tracker), "durations"

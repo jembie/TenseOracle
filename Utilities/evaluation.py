@@ -116,6 +116,7 @@ def assess_dataset_quality(
     indices_htl: np.ndarray,
     test,
     experiment,
+    filter_strategy
 ):
     """
     Retrains and evaluates model multiple times with the same set because we don't trust
@@ -144,37 +145,36 @@ def assess_dataset_quality(
     )
 
     final_results = {}
-    for strategy, experiments in results.items():
+    for _, experiments in results.items():
         for outlier_experiment in experiments:
-            experiment.log_results(results[strategy][outlier_experiment], strategy)
+            experiment.log_results(results[filter_strategy][outlier_experiment], filter_strategy)
 
-        # Collect all Statistics
-        median_no_htl = np.median(np.array(results[strategy]["no_htl"]))
-        median_with_htl = np.median(np.array(results[strategy]["htl"]))
-        median_replacement = np.median(np.array(results[strategy]["random"]))
+    # Collect all Statistics
+    median_no_htl = np.median(np.array(results[filter_strategy]["no_htl"]))
+    median_with_htl = np.median(np.array(results[filter_strategy]["htl"]))
+    median_replacement = np.median(np.array(results[filter_strategy]["random"]))
 
-        tmp = {
-                strategy : "", # <-- Just to have the Strategy shown in the logs for better readability
-                "avgF1 (No HTL)": sum(results[strategy]["no_htl"]) / len(results[strategy]["no_htl"]),
-                "avgF1 (With HTL)": sum(results[strategy]["htl"]) / len(results[strategy]["htl"]),
-                "avgF1 (random replacement)": sum(results[strategy]["random"]) / len(results[strategy]["random"]),
-                "medF1 (No HTL)": median_no_htl,
-                "medF1 (With HTL)": median_with_htl,
-                "medF1 (random replacement)": median_replacement,
-                "HTL Count": len(indices_htl),
-                "ASO-Sig[1]": deepsig.aso(
-                    results[strategy]["no_htl"], results[strategy]["htl"], seed=args.random_seed
-                ),
-                "ASO-Sig[2]": deepsig.aso(
-                    results[strategy]["random"], results[strategy]["htl"], seed=args.random_seed
-                ),
-                "HTL_harms_median": median_no_htl - median_with_htl,
-                "HTL_low_val_median": median_replacement - median_with_htl,
-        }
+    tmp = {
+            "avgF1 (No HTL)": sum(results[filter_strategy]["no_htl"]) / len(results[filter_strategy]["no_htl"]),
+            "avgF1 (With HTL)": sum(results[filter_strategy]["htl"]) / len(results[filter_strategy]["htl"]),
+            "avgF1 (random replacement)": sum(results[filter_strategy]["random"]) / len(results[filter_strategy]["random"]),
+            "medF1 (No HTL)": median_no_htl,
+            "medF1 (With HTL)": median_with_htl,
+            "medF1 (random replacement)": median_replacement,
+            "HTL Count": len(indices_htl),
+            "ASO-Sig[1]": deepsig.aso(
+                results[filter_strategy]["no_htl"], results[filter_strategy]["htl"], seed=args.random_seed
+            ),
+            "ASO-Sig[2]": deepsig.aso(
+                results[filter_strategy]["random"], results[filter_strategy]["htl"], seed=args.random_seed
+            ),
+            "HTL_harms_median": median_no_htl - median_with_htl,
+            "HTL_low_val_median": median_replacement - median_with_htl,
+    }
 
-        final_results[strategy] = tmp
+    final_results[filter_strategy] = tmp
 
-        # TODO Commit all results to Comet for later in depth eval
+    # TODO Commit all results to Comet for later in depth eval
 
     return final_results
 

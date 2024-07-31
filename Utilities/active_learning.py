@@ -51,25 +51,20 @@ class HTLOverseer(QueryStrategy):
         self.filter_strategies: List[filters.FilterStrategy] = filter_strategies
         self.query_strategy = query_strategy
         self.htl_tracker: Dict[str, List] = {strategy.__class__.__name__: [] for strategy in filter_strategies}  # Here is where I'd put my HTL samples if I had any        
-        self.time_tracker = []
+        self.time_tracker: Dict[str, List] = {strategy.__class__.__name__: [] for strategy in filter_strategies}
         self.iter_counter = 0
 
 
     def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10):
         self.iter_counter += 1
 
-        htl_samples_values = list(self.htl_tracker.values())
         for index, strategy in enumerate(self.filter_strategies):
+            htl_samples_values = list(self.htl_tracker.values())
             
             unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(htl_samples_values[index]))
             chosen_samples, confidence, proba, embeddings = self.query_strategy.query(
             clf, _dataset, unlabeled_pool, indices_labeled, y, n=n
         )
-
-        # unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(self.htl_tracker))
-        # chosen_samples, confidence, proba, embeddings = self.query_strategy.query(
-        #     clf, _dataset, unlabeled_pool, indices_labeled, y, n=n
-        # )
 
             if not self.filter_strategies:
                 # If no Filter Strategy in use just return samples as is
@@ -92,12 +87,12 @@ class HTLOverseer(QueryStrategy):
             )
 
             duration = time.time() - start_time
-            self.time_tracker.append(duration)
+            self.time_tracker[strategy.__class__.__name__].append(duration)
             # Add HTL samples to HTL tracker
             self.htl_tracker[strategy.__class__.__name__].extend(list(chosen_samples[htl_mask]))
 
             
-            return chosen_samples#[~htl_mask]
+        return chosen_samples#[~htl_mask]
 
     def __repr__(self):
         return f"HTLOverseer({str(self.filter_strategies)}, {str(self.query_strategy)})"
