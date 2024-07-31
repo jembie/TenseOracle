@@ -89,7 +89,7 @@ class LocalOutlierFactorFilter(FilterStrategy):
     ) -> ndarray:
 
         outliers_to_check = embeddings[indices_chosen]
-        train_data = np.delete(embeddings, indices_chosen)
+        train_data = np.delete(embeddings, indices_chosen, axis=0)
 
         boolean_mask = detect_outliers(filter_strategy=LocalOutlierFactor(metric="cosine", novelty=True), train_data=train_data, outliers_to_check=outliers_to_check)
 
