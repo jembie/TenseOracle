@@ -50,21 +50,21 @@ class HTLOverseer(QueryStrategy):
         super().__init__()
         self.filter_strategies: List[filters.FilterStrategy] = filter_strategies
         self.query_strategy = query_strategy
-        self.htl_tracker: Dict[str, List] = {strategy.__class__.__name__: [] for strategy in filter_strategies}  # Here is where I'd put my HTL samples if I had any        
-        self.time_tracker: Dict[str, List] = {strategy.__class__.__name__: [] for strategy in filter_strategies}
+        self.htl_tracker: Dict[str, List] = {strategy.__class__.__name__: list() for strategy in filter_strategies}  # Here is where I'd put my HTL samples if I had any        
+        self.time_tracker: Dict[str, List] = {strategy.__class__.__name__: list() for strategy in filter_strategies}
         self.iter_counter = 0
 
 
     def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10):
         self.iter_counter += 1
 
-        for index, strategy in enumerate(self.filter_strategies):
-            htl_samples_values = list(self.htl_tracker.values())
+        for strategy in self.filter_strategies:
+            htl_samples_values = self.htl_tracker[strategy.__class__.__name__]
             
-            unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(htl_samples_values[index]))
+            unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(htl_samples_values))
             chosen_samples, confidence, proba, embeddings = self.query_strategy.query(
             clf, _dataset, unlabeled_pool, indices_labeled, y, n=n
-        )
+            )
 
             if not self.filter_strategies:
                 # If no Filter Strategy in use just return samples as is
@@ -76,7 +76,7 @@ class HTLOverseer(QueryStrategy):
                 confidence=confidence,
                 probas=proba,
                 embeddings=embeddings,
-                indices_already_avoided=htl_samples_values[index],
+                indices_already_avoided=htl_samples_values,
                 clf=clf,
                 dataset=_dataset,
                 indices_unlabeled=indices_unlabeled,

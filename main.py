@@ -54,37 +54,39 @@ def main():
         active_learner.query_strategy.indices_htl
     )  # htl - Hard To Learn (i.e. Outlier)
 
+
+    metrics_to_log = {}
+
+    print("About to enter assess_dataset_quality")
+
+    # indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)
+    # indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
+
+    # Evaluate whether avoided samples indeed hurt performance
+    set_performance = assess_dataset_quality(
+        active_learner=active_learner,
+        train=train,
+        indices_labeled=indices_labeled,
+        indices_htl=indices_htl,
+        test=test,
+        config=config,
+        args=args,
+        experiment=experiment,
+    )
+
+    # Log Results to Comet
+    print("After Set Performance")
+    pprint.pprint(set_performance)
     filter_strategies = experiment.filter_strategy_name.split()
-    pprint.pprint(indices_htl)
 
     for filter_strategy in filter_strategies:
-
-        indices_used = np.concatenate((indices_labeled, indices_htl[filter_strategy]), axis=0)
-        indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
-
-        # Evaluate whether avoided samples indeed hurt performance
-        set_performance = assess_dataset_quality(
-            active_learner=active_learner,
-            train=train,
-            indices_labeled=indices_labeled,
-            indices_unlabeled=indices_unused,
-            indices_htl=indices_htl,
-            test=test,
-            config=config,
-            args=args,
-            experiment=experiment,
-            filter_strategy=filter_strategy
-        )
-
-        # Log Results to Comet
-        metrics_to_log = {
-            "avg_duration": sum(tt := active_learner.query_strategy.time_tracker) / len(tt),
-            **{f"{metric_name}" : metric_value for strategy, experiments in set_performance.item() for metric_name, metric_value in experiments.items()},
-        }
-
+        metrics_to_log.update({
+            f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
+            **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()},
+        })
         experiment.log_metrics(metrics_to_log)
         experiment.log_results(
-            np.array(active_learner.query_strategy.time_tracker), "durations"
+            np.array(active_learner.query_strategy.time_tracker[filter_strategy]), f"durations_{filter_strategy}"
         )
 
     return
