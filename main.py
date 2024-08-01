@@ -16,6 +16,7 @@ import copy
 import torch
 import numpy as np
 from Utilities.general import set_random_seed, log_failed_attempts
+import pprint
 
 
 def main():
@@ -52,15 +53,20 @@ def main():
     indices_htl = (
         active_learner.query_strategy.indices_htl
     )  # htl - Hard To Learn (i.e. Outlier)
-    indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)
-    indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
+
+
+    metrics_to_log = {}
+
+    print("About to enter assess_dataset_quality")
+
+    # indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)
+    # indices_unused = np.setdiff1d(np.arange(len(train.y)), indices_used)
 
     # Evaluate whether avoided samples indeed hurt performance
     set_performance = assess_dataset_quality(
         active_learner=active_learner,
         train=train,
         indices_labeled=indices_labeled,
-        indices_unlabeled=indices_unused,
         indices_htl=indices_htl,
         test=test,
         config=config,
@@ -69,14 +75,19 @@ def main():
     )
 
     # Log Results to Comet
-    metrics_to_log = {
-        "avg_duration": sum(tt := active_learner.query_strategy.time_tracker) / len(tt),
-        **set_performance,
-    }
-    experiment.log_metrics(metrics_to_log)
-    experiment.log_results(
-        np.array(active_learner.query_strategy.time_tracker), "durations"
-    )
+    print("After Set Performance")
+    pprint.pprint(set_performance)
+    filter_strategies = experiment.filter_strategy_name.split()
+
+    for filter_strategy in filter_strategies:
+        metrics_to_log.update({
+            f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
+            **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()},
+        })
+        experiment.log_metrics(metrics_to_log)
+        experiment.log_results(
+            np.array(active_learner.query_strategy.time_tracker[filter_strategy]), f"durations_{filter_strategy}"
+        )
 
     return
 

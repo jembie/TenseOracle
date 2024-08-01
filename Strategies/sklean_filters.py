@@ -2,11 +2,8 @@ from numpy import ndarray
 
 import numpy as np
 
-from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
-from sklearn.linear_model import SGDOneClassSVM
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.svm import OneClassSVM
 from sklearn.cluster import HDBSCAN
 
 from small_text.classifiers.classification import Classifier
@@ -54,15 +51,15 @@ class IsolationForestFilter(FilterStrategy):
     ) -> ndarray:
 
         outliers_to_check = embeddings[indices_chosen]
-        train_data = np.delete(embeddings, indices_chosen)
+        # train_data = np.delete(embeddings, indices_chosen)
 
         boolean_mask = detect_outliers(
             filter_strategy=
             IsolationForest(
                 n_estimators=400,
                 random_state=self.seed,
-                max_samples=len(train_data)),
-                train_data=train_data,
+                max_samples=len(embeddings)),
+                train_data=embeddings,
                 outliers_to_check=outliers_to_check
             )
 
@@ -92,7 +89,7 @@ class LocalOutlierFactorFilter(FilterStrategy):
     ) -> ndarray:
 
         outliers_to_check = embeddings[indices_chosen]
-        train_data = np.delete(embeddings, indices_chosen)
+        train_data = np.delete(embeddings, indices_chosen, axis=0)
 
         boolean_mask = detect_outliers(filter_strategy=LocalOutlierFactor(metric="cosine", novelty=True), train_data=train_data, outliers_to_check=outliers_to_check)
 

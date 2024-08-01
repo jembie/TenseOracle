@@ -13,6 +13,8 @@ import numpy as np
 import gc
 import time
 
+from typing import Dict, List
+
 
 def load_model(config: dict, num_classes):
     if torch.cuda.is_available():
@@ -43,52 +45,62 @@ class HTLOverseer(QueryStrategy):
     """
 
     def __init__(
-        self, filter_strategy: filters.FilterStrategy, query_strategy: QueryStrategy
+        self, filter_strategies: List[filters.FilterStrategy], query_strategy: QueryStrategy
     ):
         super().__init__()
-        self.filter_strategy = filter_strategy
+        self.filter_strategies: List[filters.FilterStrategy] = filter_strategies
         self.query_strategy = query_strategy
-        self.htl_tracker = []  # Here is where I'd put my HTL samples if I had any
-        self.time_tracker = []
+        self.htl_tracker: Dict[str, List] = {strategy.__class__.__name__: list() for strategy in filter_strategies}  # Here is where I'd put my HTL samples if I had any        
+        self.time_tracker: Dict[str, List] = {strategy.__class__.__name__: list() for strategy in filter_strategies}
         self.iter_counter = 0
+
 
     def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10):
         self.iter_counter += 1
-        unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(self.htl_tracker))
-        chosen_samples, confidence, proba, embeddings = self.query_strategy.query(
-            clf, _dataset, unlabeled_pool, indices_labeled, y, n=n
-        )
-        if not self.filter_strategy:
-            # If no Filter Strategy in use just return samples as is
-            return chosen_samples
-        start_time = time.time()
-        htl_mask = self.filter_strategy(
-            indices_chosen=chosen_samples,
-            confidence=confidence,
-            probas=proba,
-            embeddings=embeddings,
-            indices_already_avoided=self.htl_tracker,
-            clf=clf,
-            dataset=_dataset,
-            indices_unlabeled=indices_unlabeled,
-            indices_labeled=indices_labeled,
-            y=y,
-            n=n,
-            iteration=self.iter_counter,
-        )
-        duration = time.time() - start_time
-        self.time_tracker.append(duration)
-        # Add HTL samples to HTL tracker
-        self.htl_tracker += list(chosen_samples[htl_mask])
 
+        for strategy in self.filter_strategies:
+            htl_samples_values = self.htl_tracker[strategy.__class__.__name__]
+            
+            unlabeled_pool = np.setdiff1d(indices_unlabeled, np.array(htl_samples_values))
+            chosen_samples, confidence, proba, embeddings = self.query_strategy.query(
+            clf, _dataset, unlabeled_pool, indices_labeled, y, n=n
+            )
+
+            if not self.filter_strategies:
+                # If no Filter Strategy in use just return samples as is
+                return chosen_samples
+            
+            start_time = time.time()
+            htl_mask = strategy(
+                indices_chosen=chosen_samples,
+                confidence=confidence,
+                probas=proba,
+                embeddings=embeddings,
+                indices_already_avoided=htl_samples_values,
+                clf=clf,
+                dataset=_dataset,
+                indices_unlabeled=indices_unlabeled,
+                indices_labeled=indices_labeled,
+                y=y,
+                n=n,
+                iteration=self.iter_counter,
+            )
+
+            duration = time.time() - start_time
+            self.time_tracker[strategy.__class__.__name__].append(duration)
+            # Add HTL samples to HTL tracker
+            self.htl_tracker[strategy.__class__.__name__].extend(list(chosen_samples[htl_mask]))
+
+            
         return chosen_samples#[~htl_mask]
 
     def __repr__(self):
-        return f"HTLOverseer({str(self.filter_strategy)}, {str(self.query_strategy)})"
+        return f"HTLOverseer({str(self.filter_strategies)}, {str(self.query_strategy)})"
 
     @property
-    def indices_htl(self) -> np.ndarray:
-        return np.array(list(set(self.htl_tracker)))
+    def indices_htl(self) -> Dict:
+        # return np.array(list(set(self.htl_tracker)))
+        return self.htl_tracker
 
 
 def load_query_strategy(
@@ -114,12 +126,12 @@ def load_query_strategy(
         "seed": args.random_seed,
     }
     if filter_name != "None":
-        filter_strategy = getattr(Strategies, filter_name)(**kwargs)
+        filter_strategies = [getattr(Strategies, name)(**kwargs) for name in filter_name]
     else:
-        filter_strategy = None
+        filter_strategies = []
     # Add Filter to Query Strategy
     query_strategy = HTLOverseer(
-        filter_strategy=filter_strategy, query_strategy=query_strategy
+        filter_strategies=filter_strategies, query_strategy=query_strategy
     )
 
     return query_strategy
