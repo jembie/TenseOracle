@@ -1,5 +1,4 @@
 import sys
-import time
 
 from Utilities.parsers import parse_config, parse_args, parse_task_config
 from Utilities.comet import CometExperiment
@@ -12,7 +11,6 @@ from Utilities.active_learning import (
 )
 from Utilities.active_learning import perform_active_learning
 from Utilities.evaluation import assess_dataset_quality
-import copy
 import torch
 import numpy as np
 from Utilities.general import set_random_seed, log_failed_attempts
