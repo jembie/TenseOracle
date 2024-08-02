@@ -73,11 +73,13 @@ def main():
     )
 
     # Log Results to Comet
-    print("After Set Performance")
-    pprint.pprint(set_performance)
-    filter_strategies = experiment.filter_strategy_name.split()
 
-    for filter_strategy in filter_strategies:
+    pprint.pprint(set_performance)
+
+
+    for filter_strategy in query_strategy.filter_strategies:
+        filter_strategy = filter_strategy.__class__.__name__
+
         metrics_to_log.update({
             f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
             **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()},
