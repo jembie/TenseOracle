@@ -116,9 +116,9 @@ if __name__ == "__main__":
                     args.filter_strategy_name,
                     config["SHARED_CACHE_ADR"],
                 )
-                raise Exception(
-                    "No GPU Found, If none required please set --gpu_optional"
-                )
+            raise Exception(
+                "No GPU Found, If none required please set --gpu_optional"
+            )
 
     main()
     sys.exit(0)
