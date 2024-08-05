@@ -1,5 +1,4 @@
 import sys
-import time
 
 from Utilities.parsers import parse_config, parse_args, parse_task_config
 from Utilities.comet import CometExperiment
@@ -12,7 +11,6 @@ from Utilities.active_learning import (
 )
 from Utilities.active_learning import perform_active_learning
 from Utilities.evaluation import assess_dataset_quality
-import copy
 import torch
 import numpy as np
 from Utilities.general import set_random_seed, log_failed_attempts
@@ -75,11 +73,13 @@ def main():
     )
 
     # Log Results to Comet
-    print("After Set Performance")
-    pprint.pprint(set_performance)
-    filter_strategies = experiment.filter_strategy_name.split()
 
-    for filter_strategy in filter_strategies:
+    pprint.pprint(set_performance)
+
+
+    for filter_strategy in query_strategy.filter_strategies:
+        filter_strategy = filter_strategy.__class__.__name__
+
         metrics_to_log.update({
             f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
             **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()},
@@ -116,9 +116,9 @@ if __name__ == "__main__":
                     args.filter_strategy_name,
                     config["SHARED_CACHE_ADR"],
                 )
-                raise Exception(
-                    "No GPU Found, If none required please set --gpu_optional"
-                )
+            raise Exception(
+                "No GPU Found, If none required please set --gpu_optional"
+            )
 
     main()
     sys.exit(0)
