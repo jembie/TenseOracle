@@ -38,7 +38,7 @@ srun python3 main.py \
     --task_config ${json_file} \
     --experiment_config ./Configs/standard.json \
     --filter_strategy_name HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS \
-    --comet_api_key uz7UiNA5wcwL9Ccqtu7DLhKCa \
+    --comet_api_key  \
     --comet_workspace ${comet_workspace}
     --random_seed \${random_seed}
 EOF
