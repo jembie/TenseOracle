@@ -2,13 +2,18 @@
 
 JSON_PATH="./Configs/Tasks"
 
+# Ensure output directories exist
+mkdir -p ./slurm-runs
+mkdir -p ./generated-slurm-scripts
+
 for json_file in "$JSON_PATH"/*.json; do
   # Get the base filename without the path and extension
   config=$(basename "${json_file}" .json)
 
+  # These variables are meant to be expanded during script creation
   output_file="full-run-${config}-%a-%A-%j.out"
   comet_workspace="outlier-detection"
-  
+
   # Generate the SLURM script with the replaced values
   slurm_script=$(cat << EOF
 #!/bin/bash
@@ -32,20 +37,22 @@ nvidia-smi
 hostname
 
 # Calculate the random seed within the SLURM script
-random_seed=\$((42 + SLURM_ARRAY_TASK_ID))
+random_seed=\$((42 + \${SLURM_ARRAY_TASK_ID}))
+
+echo "Seed: \${random_seed}"
 
 srun python3 main.py \
     --task_config ${json_file} \
     --experiment_config ./Configs/standard.json \
     --filter_strategy_name HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS \
     --comet_api_key uz7UiNA5wcwL9Ccqtu7DLhKCa \
-    --comet_workspace ${comet_workspace}
+    --comet_workspace ${comet_workspace} \
     --random_seed \${random_seed}
 EOF
     )
-    
+
   # Save the generated SLURM script to a file
-  script_file="./generated-slurm-scripts/slurm-script-${comet_workspace}-${config}.sh"    
+  script_file="./generated-slurm-scripts/${comet_workspace}-${config}.sh"
   touch "$script_file"
   echo "$slurm_script" > "$script_file"
 
