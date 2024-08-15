@@ -111,9 +111,10 @@ def parse_config(args):
         config = json.load(file)
 
     # Create An Experiment Specific Cache to limit interference
+    task_name = Path(args.task_config).stem # This removes the path and .json extension of the path
     config[
         "CACHE_ADR"
-    ] = f'{config["CACHE_ADR"]}/{args.filter_strategy_name}_{args.random_seed}'
+    ] = f'{config["CACHE_ADR"]}/{task_name}/{args.filter_strategy_name}_{args.random_seed}'
     Path(config["CACHE_ADR"]).mkdir(parents=True, exist_ok=True)
     return config
 

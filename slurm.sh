@@ -2,11 +2,11 @@
 #SBATCH --nodes=1              # request 2 nodes
 #SBATCH --cpus-per-task=6      # use 6 threads per task
 #SBATCH --gres=gpu:1           # use 1 GPU per node (i.e. use one GPU per task)
-#SBATCH --time=70:00:00        # run for 1 hour
+#SBATCH --time=01:00:00        # run for 1 hour
 #SBATCH --mem=10G
 #SBATCH --job-name=Standard_50h
-#SBATCH --array=0-9
-#SBATCH --exclude=i8008
+#SBATCH --array=0-1
+#SBATCH --exclude=i8008,i8021,i8014,i8023
 
 
 module --force purge
