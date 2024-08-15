@@ -89,6 +89,9 @@ class CometExperiment:
             pass
         else:
             f1_scores = np.array(f1_scores)
-            path = Path(f"{self.cache_adr}/{name}.npy")
+            path = Path(f"{self.cache_adr}/{self.project_name}/{name}.npy")
+            if not path.exists():
+                path.mkdir(parents=True, exist_ok=True)
+
             np.save(path, f1_scores)
             self.EXPERIMENT.log_asset(path, file_name=f"{name}.npy")
