@@ -4,3 +4,5 @@ cache/
 .vscode/**
 .env
 venv/
+
+.ipynb_checkpoints
