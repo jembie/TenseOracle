@@ -17,7 +17,13 @@ numpy = "^1.26.4"
 torch = "^2.3.0"
 deepsig = "^1.2.8"
 black = "^24.4.2"
+matplotlib = "^3.9.0"
+seaborn = "^0.13.2"
+nbdime = "^4.0.1"
 
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
 
 [build-system]
 requires = ["poetry-core"]
