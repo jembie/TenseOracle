@@ -83,6 +83,7 @@ def main():
         metrics_to_log.update({
             f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
             **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()},
+            **{f"{filter_strategy}_avoided_samples": indices_htl[filter_strategy]}
         })
         experiment.log_metrics(metrics_to_log)
         experiment.log_results(
