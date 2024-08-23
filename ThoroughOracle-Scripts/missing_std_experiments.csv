@@ -1,4 +1,0 @@
-,seed,filter,task
-0,49,HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS,xBanking77
-1,50,HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS,xBanking77
-2,51,HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS,xBanking77
