@@ -52,9 +52,6 @@ def main():
         active_learner.query_strategy.indices_htl
     )  # htl - Hard To Learn (i.e. Outlier)
 
-
-    metrics_to_log = {}
-
     print("About to enter assess_dataset_quality")
 
     # indices_used = np.concatenate((indices_labeled, indices_htl), axis=0)
@@ -76,18 +73,20 @@ def main():
 
     pprint.pprint(set_performance)
 
-
+    metrics_to_log = {}
     for filter_strategy in query_strategy.filter_strategies:
         filter_strategy = filter_strategy.__class__.__name__
 
         metrics_to_log.update({
             f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
-            **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()},
-            **{f"{filter_strategy}_avoided_samples": indices_htl[filter_strategy]}
+            **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()}
         })
         experiment.log_metrics(metrics_to_log)
         experiment.log_results(
-            np.array(active_learner.query_strategy.time_tracker[filter_strategy]), f"durations_{filter_strategy}"
+            active_learner.query_strategy.time_tracker[filter_strategy], f"durations_{filter_strategy}"
+        )
+        experiment.log_marked_samples(
+            indices_htl[filter_strategy], "Marked_Samples"
         )
 
     return

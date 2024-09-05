@@ -77,7 +77,7 @@ class CometExperiment:
         else:
             self.EXPERIMENT.log_parameters(dictionary)
 
-    def log_results(self, f1_scores: list, name: str):
+    def log_results(self, f1_scores: list, name: str) -> None:
         """
         Converts a list of f1_scores into a numpy array
         Saves this numpy array to a .npy file
@@ -91,4 +91,13 @@ class CometExperiment:
             f1_scores = np.array(f1_scores)
             path = Path(f"{self.cache_adr}/{name}.npy")
             np.save(path, f1_scores)
+            self.EXPERIMENT.log_asset(path, file_name=f"{name}.npy")
+
+    def log_marked_samples(self, marked_samples: list, name: str) -> None:
+        if self.EXPERIMENT is None:
+            pass
+        else:
+            avoided_samples = np.array(marked_samples)
+            path = Path(f"{self.cache_adr}/{name}.npy")
+            np.save(path, avoided_samples)
             self.EXPERIMENT.log_asset(path, file_name=f"{name}.npy")
