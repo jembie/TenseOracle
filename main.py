@@ -86,7 +86,7 @@ def main():
             active_learner.query_strategy.time_tracker[filter_strategy], f"durations_{filter_strategy}"
         )
         experiment.log_marked_samples(
-            indices_htl[filter_strategy], "Marked_Samples"
+            indices_htl[filter_strategy], f"{filter_strategy}_Marked_Samples"
         )
 
     return
