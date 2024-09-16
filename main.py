@@ -48,9 +48,7 @@ def main():
         experiment=experiment,
     )
     # Extract all Identified Samples from Filter
-    indices_htl = (
-        active_learner.query_strategy.indices_htl
-    )  # htl - Hard To Learn (i.e. Outlier)
+    indices_htl = active_learner.query_strategy.indices_htl  # htl - Hard To Learn (i.e. Outlier)
 
     print("About to enter assess_dataset_quality")
 
@@ -77,16 +75,20 @@ def main():
     for filter_strategy in query_strategy.filter_strategies:
         filter_strategy = filter_strategy.__class__.__name__
 
-        metrics_to_log.update({
-            f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
-            **{f"{filter_strategy}_{metric}" : metric_value for metric, metric_value in set_performance[filter_strategy].items()}
-        })
+        metrics_to_log.update(
+            {
+                f"{filter_strategy}_avg_duration": sum(tt := active_learner.query_strategy.time_tracker[filter_strategy]) / len(tt),
+                **{f"{filter_strategy}_{metric}": metric_value for metric, metric_value in set_performance[filter_strategy].items()},
+            }
+        )
         experiment.log_metrics(metrics_to_log)
         experiment.log_results(
-            active_learner.query_strategy.time_tracker[filter_strategy], f"durations_{filter_strategy}"
+            active_learner.query_strategy.time_tracker[filter_strategy],
+            f"durations_{filter_strategy}",
         )
         experiment.log_marked_samples(
-            indices_htl[filter_strategy], f"{filter_strategy}_Marked_Samples"
+            marked_samples=indices_htl[filter_strategy],
+            name=f"{filter_strategy}_Marked_Samples",
         )
 
     return
@@ -116,9 +118,7 @@ if __name__ == "__main__":
                     args.filter_strategy_name,
                     config["SHARED_CACHE_ADR"],
                 )
-            raise Exception(
-                "No GPU Found, If none required please set --gpu_optional"
-            )
+            raise Exception("No GPU Found, If none required please set --gpu_optional")
 
     main()
     sys.exit(0)
