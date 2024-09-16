@@ -15,7 +15,7 @@ from Strategies.LE_filters import (
     TeachingFilter_WOW,
 )
 from Strategies.other_filters import SingleStepEntropy, SingleStepEntropy_SimplePseudo
-from Strategies.sklean_filters import IsolationForestFilter, LocalOutlierFactorFilter, HDBScanFilter
+from Strategies.sklearn_filters import IsolationForestFilter, LocalOutlierFactorFilter, HDBScanFilter
 
 # ======= Only use these filters for experiments =======
 
