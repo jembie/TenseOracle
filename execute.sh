@@ -11,21 +11,21 @@ for json_file in "$JSON_PATH"/*.json; do
   config=$(basename "${json_file}" .json)
 
   # These variables are meant to be expanded during script creation
-  output_file="full-run-${config}-%a-%A-%j.out"
   comet_workspace="outlier-detection"
+  output_file="${comet_workspace}-${config}-%a-%A-%j.out"
 
   # Generate the SLURM script with the replaced values
   slurm_script=$(cat << EOF
 #!/bin/bash
 #SBATCH --nodes=1              # request 1 node
-#SBATCH --cpus-per-task=12     # use 12 threads per task
+#SBATCH --cpus-per-task=6     # use 12 threads per task
 #SBATCH --gres=gpu:1           # use 1 GPU per node (i.e. use one GPU per task)
-#SBATCH --time=70:00:00        # run for 70 hours
+#SBATCH --time=100:00:00       # run for 100 hours
 #SBATCH --mem=10G
 #SBATCH --account=p_ml_il
 #SBATCH --job-name=${config}
 #SBATCH --output=./slurm-runs/${output_file}
-#SBATCH --exclude=i8008,i8021,i8014,i8023
+#SBATCH --exclude=i8008,i8009,i8011,i8014,i8021,i8023
 #SBATCH --array=0-9
 
 module --force purge
@@ -45,8 +45,8 @@ srun python3 main.py \
     --task_config ${json_file} \
     --experiment_config ./Configs/standard.json \
     --filter_strategy_name HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS \
-    --comet_api_key  \
-    --comet_workspace ${comet_workspace}
+    --comet_api_key   \
+    --comet_workspace ${comet_workspace} \
     --random_seed \${random_seed}
 EOF
     )
