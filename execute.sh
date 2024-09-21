@@ -24,7 +24,7 @@ for json_file in "$JSON_PATH"/*.json; do
 #SBATCH --time=100:00:00        # run for 70 hours
 #SBATCH --mem=10G
 #SBATCH --account=p_ml_il
-#SBATCH --job-name=${config}
+#SBATCH --job-name=${comet_workspace}-${config}
 #SBATCH --output=./slurm-runs/${comet_workspace}/${output_file}
 #SBATCH --exclude=i8008,i8009,i8011,i8014,i8021,i8023
 #SBATCH --array=0-19
