@@ -1,17 +1,18 @@
 #!/bin/bash
 
 JSON_PATH="./Configs/Tasks"
+comet_workspace="outlier-detection"
 
 # Ensure output directories exist
-mkdir -p ./slurm-runs
-mkdir -p ./generated-slurm-scripts
+mkdir -p ./slurm-runs/${comet_workspace}
+mkdir -p ./generated-slurm-scripts/${comet_workspace}
+
 
 for json_file in "$JSON_PATH"/*.json; do
   # Get the base filename without the path and extension
   config=$(basename "${json_file}" .json)
 
   # These variables are meant to be expanded during script creation
-  comet_workspace="sklearn-20"
   output_file="${comet_workspace}-${config}-%a-%A-%j.out"
 
   # Generate the SLURM script with the replaced values
@@ -24,7 +25,7 @@ for json_file in "$JSON_PATH"/*.json; do
 #SBATCH --mem=10G
 #SBATCH --account=p_ml_il
 #SBATCH --job-name=${config}
-#SBATCH --output=./slurm-runs/${output_file}
+#SBATCH --output=./slurm-runs/${comet_workspace}/${output_file}
 #SBATCH --exclude=i8008,i8009,i8011,i8014,i8021,i8023
 #SBATCH --array=0-19
 
@@ -52,7 +53,7 @@ EOF
     )
 
   # Save the generated SLURM script to a file
-  script_file="./generated-slurm-scripts/${comet_workspace}-${config}.sh"
+  script_file="./generated-slurm-scripts/${comet_workspace}/${config}.sh"
   touch "$script_file"
   echo "$slurm_script" > "$script_file"
 
