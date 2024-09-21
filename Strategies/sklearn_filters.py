@@ -111,7 +111,7 @@ class HDBScanFilter(FilterStrategy):
     ) -> ndarray:
         hdb = HDBSCAN(metric="cosine")
         hdb.fit(embeddings)
-        labels = hdb.labels_ < 0
+        labels = hdb.labels_ == -1
         print(f"Total Outliers detected for: HDBScan {sum(labels) / len(labels)}")
 
         return labels[indices_chosen]
