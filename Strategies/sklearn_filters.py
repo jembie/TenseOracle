@@ -39,6 +39,7 @@ class IsolationForestFilter(FilterStrategy):
     ) -> ndarray:
         boolean_mask = detect_outliers(
             filter_strategy=IsolationForest(n_estimators=400, random_state=self.seed, max_samples=len(embeddings), n_jobs=-1),
+            train_data=embeddings,
             outliers_to_check=indices_chosen,
         )
 
@@ -66,7 +67,9 @@ class LocalOutlierFactorFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
         boolean_mask = detect_outliers(
-            filter_strategy=LocalOutlierFactor(n_neighbors=20, metric="cosine", novelty=False, n_jobs=-1), outliers_to_check=indices_chosen
+            filter_strategy=LocalOutlierFactor(n_neighbors=20, metric="cosine", novelty=False, n_jobs=-1),
+            train_data=embeddings, 
+            outliers_to_check=indices_chosen
         )
         return boolean_mask
 
