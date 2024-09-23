@@ -47,7 +47,7 @@ srun python3 main.py \
     --experiment_config ./Configs/standard.json \
     --filter_strategy_name HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS \
     --comet_api_key  \
-    --comet_workspace ${comet_workspace}
+    --comet_workspace ${comet_workspace} \
     --random_seed \${random_seed}
 EOF
     )
