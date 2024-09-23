@@ -1,7 +1,8 @@
 #!/bin/bash
 
 JSON_PATH="./Configs/Tasks"
-comet_workspace="outlier-detection"
+comet_workspace="sklearn-20"
+comet_key=""
 
 # Ensure output directories exist
 mkdir -p ./slurm-runs/${comet_workspace}
@@ -46,11 +47,13 @@ srun python3 main.py \
     --task_config ${json_file} \
     --experiment_config ./Configs/standard.json \
     --filter_strategy_name HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS \
-    --comet_api_key  \
+    --comet_api_key ${comet_key} \
     --comet_workspace ${comet_workspace} \
     --random_seed \${random_seed}
+
 EOF
     )
+
 
   # Save the generated SLURM script to a file
   script_file="./generated-slurm-scripts/${comet_workspace}/${config}.sh"
