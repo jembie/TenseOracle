@@ -1,5 +1,6 @@
 from small_text.query_strategies.strategies import QueryStrategy, RandomSampling, PredictionEntropy
 from scipy.stats import entropy
+from abc import ABC, abstractmethod
 import numpy as np
 
 
@@ -30,6 +31,64 @@ class UncertaintyClipping(QueryStrategy):
             proba,
             embeddings,
         )
+
+    def score(self, clf, dataset, indices_unlabeled, indices_labeled, y):
+        """Assigns a confidence score to each instance.
+
+        Parameters
+        ----------
+        clf : small_text.classifiers.Classifier
+            A text classifier.
+        dataset : small_text.data.datasets.Dataset
+            A text dataset.
+        indices_unlabeled : np.ndarray[int]
+            Indices (relative to `dataset`) for the unlabeled data.
+        indices_labeled : np.ndarray[int]
+            Indices (relative to `dataset`) for the labeled data.
+        y : np.ndarray[int] or csr_matrix
+            List of labels where each label maps by index position to `indices_labeled`.
+
+        Returns
+        -------
+        confidence : np.ndarray[float]
+            Array of confidence scores in the shape (n_samples, n_classes).
+            If `self.lower_is_better` the confiden values are flipped to negative so that
+            subsequent methods do not need to differentiate maximization/minimization.
+        """
+
+        confidence, proba, embeddings = self.get_confidence(clf, dataset, indices_unlabeled, indices_labeled, y)
+        self.scores_ = confidence
+        if not self.lower_is_better:
+            confidence = -confidence
+
+        return confidence, proba, embeddings
+
+    @abstractmethod
+    def get_confidence(self, clf, dataset, indices_unlabeled, indices_labeled, y):
+        """Computes a confidence score for each of the given instances.
+
+        Parameters
+        ----------
+        clf : small_text.classifiers.Classifier
+            A text classifier.
+        dataset : small_text.data.datasets.Dataset
+            A text dataset.
+        indices_unlabeled : np.ndarray[int]
+            Indices (relative to `dataset`) for the unlabeled data.
+        indices_labeled : np.ndarray[int]
+            Indices (relative to `dataset`) for the labeled data.
+        y : np.ndarray[int] or csr_matrix
+            List of labels where each label maps by index position to `indices_labeled`.
+        Returns
+        -------
+        confidence : ndarray[float]
+            Array of confidence scores in the shape (n_samples, n_classes).
+        """
+        pass
+
+    def __str__(self):
+        return 'ConfidenceBasedQueryStrategy()'
+
 
 
 class PredictionEntropyUncertaintyClipped(UncertaintyClipping):
