@@ -57,7 +57,7 @@ class RandomSampling(QueryStrategy):
 
     def query(self, clf, _dataset, indices_unlabeled, indices_labeled, y, n=10):
         self._validate_query_input(indices_unlabeled, n)
-        return np.random.choice(indices_unlabeled, size=n, replace=False), np.random.random(size=len(_dataset.y))
+        return np.random.choice(indices_unlabeled, size=n, replace=False), np.random.random(size=len(_dataset.y)), None, None
 
     def __str__(self):
         return 'RandomSampling()'
