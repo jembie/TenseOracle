@@ -1,8 +1,0 @@
-{
-  "dataset_path": "trec",
-  "task_class": "text_classification",
-  "task_name": "zTREC-Coarse",
-  "input_text_column": "text",
-  "label_column": "coarse_label",
-  "test_set_name": "test"
-}
