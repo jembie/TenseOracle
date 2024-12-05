@@ -86,6 +86,12 @@ def parse_args():
                         type=str,
                         required=False,
                         help='The name of the Comet workspace.')
+    
+    parser.add_argument("--percentile",
+                    type=float,
+                    default=None,
+                    help="The percentile value to choose for the Semantic AE filter, e.g.: `--percentile 0.95`")
+
 
     return parser.parse_args()
 

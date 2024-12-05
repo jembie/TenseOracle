@@ -34,7 +34,7 @@ class AutoFilter_Chen_Like(FilterStrategy):
     Idea: Use an Auto-encoder Ensemble to detect outliers
     '''
 
-    def __init__(self, device, **kwargs):
+    def __init__(self, device, percentile: float = None, **kwargs):
         """
 
         :param device:
@@ -46,6 +46,7 @@ class AutoFilter_Chen_Like(FilterStrategy):
         self.criterion = None
         self.device = device
         self.predictions = []
+        self.percentile = percentile
 
     def create_autoencoder(self, current_dim, alpha=0.5, min_nodes=3, max_layers=3):
         """
@@ -199,7 +200,10 @@ class AutoFilter_Chen_Like(FilterStrategy):
         # Use median loss for each sample
         outlier_scores = np.median(losses, axis=0)
         # Classical Outlier Detection mean + s standard deviations as thresholds
-        htl_mask = outlier_scores > (np.mean(outlier_scores) + 2 * np.std(outlier_scores))
+        if self.percentile:
+            htl_mask = outlier_scores > np.percentile(outlier_scores, self.percentile)
+        else:
+            htl_mask = outlier_scores > (np.mean(outlier_scores) + 2 * np.std(outlier_scores))
 
         return htl_mask
 

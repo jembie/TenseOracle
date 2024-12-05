@@ -103,6 +103,7 @@ def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -
         "device": "cpu:0" if torch.cuda.device_count() == 0 else "cuda:0",
         "shared_cache": config["SHARED_CACHE_ADR"],
         "seed": args.random_seed,
+        "percentile": args.percentile
     }
     if filter_name != "None":
         filter_strategy = getattr(Strategies, filter_name)(**kwargs)
