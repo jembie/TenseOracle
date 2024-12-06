@@ -27,7 +27,7 @@ for json_file in "$JSON_PATH"/*.json; do
 #SBATCH --account=p_ml_il
 #SBATCH --job-name=${comet_workspace}-${config}
 #SBATCH --output=./slurm-runs/${comet_workspace}/${output_file}
-#SBATCH --exclude=i8008,i8009,i8011,i8014,i8021,i8023
+#SBATCH --exclude=i8003,i8007,i8008,i8009,i8011,i8014,i8021,i8023,i8027,i8032
 #SBATCH --array=0-19
 
 module --force purge
