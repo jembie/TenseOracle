@@ -67,7 +67,7 @@ class LocalOutlierFactorFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
         boolean_mask = detect_outliers(
-            filter_strategy=LocalOutlierFactor(n_neighbors=20, metric="cosine", novelty=False, n_jobs=-1),
+            filter_strategy=LocalOutlierFactor(metric="cosine", novelty=False, n_jobs=-1),
             train_data=embeddings, 
             outliers_to_check=indices_chosen
         )
@@ -94,7 +94,7 @@ class HDBScanFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        hdb = HDBSCAN(metric="cosine", n_jobs=-1, min_cluster_size=20)
+        hdb = HDBSCAN(metric="cosine", n_jobs=-1)
         hdb.fit(embeddings)
         labels = hdb.labels_ == -1
         print(f"Total Outliers detected for: HDBScan {sum(labels) / len(labels)}")
