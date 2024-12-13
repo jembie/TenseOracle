@@ -1,5 +1,5 @@
 from small_text.query_strategies.strategies import QueryStrategy, RandomSampling, ConfidenceBasedQueryStrategy
-import AE_filters
+from . import AE_filters
 from scipy.stats import entropy
 from abc import ABC, abstractmethod
 import numpy as np
