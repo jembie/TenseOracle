@@ -12,7 +12,7 @@ Idea:
     i.e. Labels have to be assigned at random if Oracle has not the required background knowledge
     e.g. The language skills or knowing what the author tried to express when creating this sample text
 """
-import torch.cuda
+import torch.cuda 
 
 from Strategies.filters import FilterStrategy
 from collections import defaultdict

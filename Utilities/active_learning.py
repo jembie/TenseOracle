@@ -95,7 +95,7 @@ def load_query_strategy(strategy_name, filter_name, config, args, num_classes) -
     :param num_classes:
     :return:
     """
-    query_strategy = getattr(acquisition_functions, strategy_name)()
+    query_strategy = getattr(acquisition_functions, strategy_name)(args=args)
 
     kwargs = {
         "clf_factory": load_model(config, num_classes),
