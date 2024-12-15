@@ -1,5 +1,5 @@
 from small_text.query_strategies.strategies import QueryStrategy, RandomSampling, ConfidenceBasedQueryStrategy
-from . import AE_filters
+from Strategies.AE_filters import AutoFilter_Chen_Like
 from scipy.stats import entropy
 from abc import ABC, abstractmethod
 import numpy as np
@@ -102,7 +102,7 @@ class ReconstructionLossClipping(QueryStrategy):
         self.scores_ = None
         self.device = "cpu:0" if torch.cuda.device_count() == 0 else "cuda:0"
         self.iter_counter = 0
-        self.autoencoder = AE_filters.AutoFilter_Chen_Like(device=self.device, percentile=args.percentile)
+        self.autoencoder = AutoFilter_Chen_Like(device=self.device, percentile=args.percentile)
         self.htl_mask = []
 
     def query(self, clf, dataset, indices_unlabeled, indices_labeled, y, n=10):
