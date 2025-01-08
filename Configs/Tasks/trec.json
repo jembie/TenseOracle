@@ -1,7 +1,7 @@
 {
   "dataset_path": "trec",
   "task_class": "text_classification",
-  "task_name": "zTREC",
+  "task_name": "xTREC",
   "input_text_column": "text",
   "label_column": "fine_label",
   "test_set_name": "test"

@@ -1,7 +1,7 @@
 {
   "dataset_path": "imdb",
   "task_class": "text_classification",
-  "task_name": "zIMDB",
+  "task_name": "xIMDB",
   "input_text_column": "text",
   "label_column": "label",
   "test_set_name": "test"
