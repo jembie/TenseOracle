@@ -65,7 +65,6 @@ class UncertaintyClipping(QueryStrategy):
 
         return confidence, proba, embeddings
 
-    @abstractmethod
     def get_confidence(self, clf, dataset, indices_unlabeled, indices_labeled, y):
         """Computes a confidence score for each of the given instances.
 
@@ -89,7 +88,7 @@ class UncertaintyClipping(QueryStrategy):
         pass
 
     def __str__(self):
-        return 'ConfidenceBasedQueryStrategy()'
+        return 'ConfidenceBasedQueryStrategy() - UncertaintyClipping'
 
 class ReconstructionLossClipping(QueryStrategy):
     """A base class for confidence-based querying.
@@ -161,7 +160,6 @@ class ReconstructionLossClipping(QueryStrategy):
 
         return confidence, proba, embeddings
 
-    @abstractmethod
     def get_confidence(self, clf, dataset, indices_unlabeled, indices_labeled, y):
         """Computes a confidence score for each of the given instances.
 
@@ -185,7 +183,7 @@ class ReconstructionLossClipping(QueryStrategy):
         pass
 
     def __str__(self):
-        return 'ConfidenceBasedQueryStrategy()'
+        return 'ConfidenceBasedQueryStrategy() - ReconstructionLossClipping'
 
 
 class PredictionEntropyUncertaintyClipped(UncertaintyClipping):
@@ -200,7 +198,7 @@ class PredictionEntropyUncertaintyClipped(UncertaintyClipping):
         return np.apply_along_axis(lambda x: entropy(x), 1, proba), proba, embeddings
 
     def __str__(self):
-        return "PredictionEntropy()"
+        return "PredictionEntropy() - PredictionEntropyUncertaintyClipped"
 
 
 class PredictionEntropy(ConfidenceBasedQueryStrategy):
