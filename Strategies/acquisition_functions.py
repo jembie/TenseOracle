@@ -114,7 +114,18 @@ class ReconstructionLossClipping(QueryStrategy):
             return np.array(indices_unlabeled)
 
         self.htl_mask = self.autoencoder(
-            indices_chosen=indices_unlabeled, indices_unlabeled=indices_unlabeled, indices_labeled=indices_labeled, indices_already_avoided=[], confidence=confidence, embeddings=embeddings, probas=proba, clf=clf, dataset=dataset, n=len(indices_unlabeled), y=y, iteration=self.iter_counter
+            indices_chosen=indices_unlabeled, 
+            indices_unlabeled=indices_unlabeled, 
+            indices_labeled=indices_labeled, 
+            indices_already_avoided=[], 
+            confidence=confidence, 
+            embeddings=embeddings, 
+            probas=proba, 
+            clf=clf, 
+            dataset=dataset, 
+            n=len(indices_unlabeled), 
+            y=y, 
+            iteration=self.iter_counter
             )
         
         unlabeled_pool = indices_unlabeled[~self.htl_mask]
@@ -180,7 +191,11 @@ class ReconstructionLossClipping(QueryStrategy):
         confidence : ndarray[float]
             Array of confidence scores in the shape (n_samples, n_classes).
         """
-        pass
+
+        #proba_ = clf.predict_proba(dataset)  # Average Dur 88s
+        embeddings, proba = clf.embed(dataset, return_proba=True, embedding_method="cls")  # average dur 84s
+        return np.apply_along_axis(lambda x: entropy(x), 1, proba), proba, embeddings
+
 
     def __str__(self):
         return 'ConfidenceBasedQueryStrategy() - ReconstructionLossClipping'
