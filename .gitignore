@@ -6,3 +6,4 @@ cache/
 venv/
 .DS_Store
 .ipynb_checkpoints
+docs/_build/
