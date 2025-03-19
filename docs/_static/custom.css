@@ -1,0 +1,26 @@
+cite,
+span.cite {
+	overflow: auto;
+	overflow-y: hidden; /* fixes display issues on Chrome browsers */
+	background-color: var(--pst-color-surface);
+	border: 1px solid var(--pst-color-border);
+	border-radius: 0.25rem;
+	padding: 0.1rem 0.25rem;
+	color: var(--pst-color-inline-code);
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	-webkit-hyphens: none;
+	hyphens: none;
+	font-style: normal;
+}
+
+cite,
+div[class*="highlight-"] {
+	clear: both;
+}
+
+span.cite {
+	white-space: nowrap;
+}
+
+/* cite.literal inherits all properties from cite */
