@@ -6,4 +6,5 @@ ThoroughOracle-Scripts
 
    constants
    comet_downloader
+   analysis
    examples
