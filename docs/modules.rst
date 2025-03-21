@@ -6,5 +6,7 @@ ThoroughOracle-Scripts
 
    constants
    comet_downloader
-   analysis
+   standard_analysis
+   endperformance_analysis
+   missed_seeds
    examples
