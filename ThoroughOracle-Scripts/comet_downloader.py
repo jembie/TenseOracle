@@ -1,26 +1,13 @@
 import comet_ml as comet
-import pandas as pd
 from pathlib import Path
-import matplotlib.pyplot as plt
 from tqdm import tqdm
-import seaborn as sns
-from typing import Dict, List, Any, DefaultDict, Optional
-from collections.abc import Callable
-import numpy as np
-import os
-import textwrap
-from collections import defaultdict
+from typing import Dict, List, Any, Optional
 from dotenv import load_dotenv, find_dotenv
 from constants import (
     METRICS,
-    PARAMETERS,
     TASK_NAMES,
     BASE_PATH,
-    CONFIGS_PATH,
-    TASK_CONFIGS,
     COMET_WORKSPACE,
-    FILTER_STRATEGY_NAMES,
-    FILTER_STRATEGY_NAMES_FINAL,
 )
 
 
@@ -134,7 +121,7 @@ class DownloadCometData:
         Parameters
             task_name : str
                 The name of the task to load data from.
-            filter_strategies_used : bool, optional, default: `False`
+            filter_strategies_used : bool, optional, default: False
                 If `True`, indicates that filter strategies were used during the experiment.
 
         Returns
