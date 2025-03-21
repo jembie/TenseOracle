@@ -1,9 +1,30 @@
+"""
+Constants Module for Outlier Detection Experiment Framework
+
+This module contains all configuration constants and mappings used throughout the outlier detection
+experiments. It defines experiment settings, filter strategy names, metrics, parameters, task names,
+and file paths essential for running experiments and processing results.
+
+Constants include:
+- Experiment configuration (workspace, flags, seed count)
+- Filter strategy definitions and mappings
+- Metrics configuration with expected types
+- Parameter definitions
+- Dataset task names and their configurations
+- File paths for accessing configuration files and data
+
+This centralized approach ensures consistency across the experimental framework and simplifies
+configuration management.
+"""
+
 from pathlib import Path
 
-COMET_WORKSPACE: str = "final-experiment-all-filters"
+# Experiment configuration
+COMET_WORKSPACE: str = "outlier-detection"
 FINAL_EXPERIMENT_FLAG: bool = False
 SEED_COUNT: int = 20
 
+# Filter strategy configurations
 FILTER_STRATEGY_NAMES = ["HDBScanFilter LocalOutlierFactorFilter IsolationForestFilter SimpleDSM SemanticAE SimpleSS"]
 FILTER_STRATEGY_NAMES_FINAL = [
     "HDBScanFilter",
@@ -14,7 +35,17 @@ FILTER_STRATEGY_NAMES_FINAL = [
     "SimpleSS",
 ]
 
+# Clean names mapping for filter strategies
+FILTER_NAMES_CLEAN = {
+    "LoserFilter_Plain": "Simple DSM",
+    "AutoFilter_Chen_Like": "Semantic AE",
+    "SingleStepEntropy_SimplePseudo": "Simple SS",
+    "HDBScanFilter": "HDBScan",
+    "IsolationForestFilter": "IsolationForest",
+    "LocalOutlierFactorFilter": "LocalOutlierFactor",
+}
 
+# Metric definitions with their expected types
 METRICS = {
     "AutoFilter_Chen_Like_HTL Count": float,
     "AutoFilter_Chen_Like_avg_duration": float,
@@ -71,6 +102,7 @@ METRICS = {
     "SingleStepEntropy_SimplePseudo_medF1 (random replacement)": float,
 }
 
+# Parameter definitions with their expected types
 PARAMETERS = {
     "strategy_name": str,
     "filter_strategy_name": str,
@@ -78,6 +110,7 @@ PARAMETERS = {
     "task": str,
 }
 
+# Base task names for experiments
 TASK_NAMES = [
     "ag-news",
     "dbpedia",
@@ -90,13 +123,15 @@ TASK_NAMES = [
     "wiki-talk",
 ]
 
+# Version prefix for task names
 _version = "x"
 TASK_NAMES = [_version + t for t in TASK_NAMES]
 
-
+# Path configurations
 BASE_PATH = Path(__file__).parent
 CONFIGS_PATH = BASE_PATH.parent / "Configs" / "Tasks"
 
+# Task configuration file mappings
 TASK_CONFIGS = {
     "xAG News": CONFIGS_PATH / "ag_news.json",
     "xDBPedia": CONFIGS_PATH / "dbpedia.json",
