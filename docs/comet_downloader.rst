@@ -1,4 +1,4 @@
-comet\_downloader module
+Comet Downloader module
 ========================
 
 .. automodule:: comet_downloader

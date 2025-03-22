@@ -1,4 +1,4 @@
-constants module
+Constants module
 ================
 
 .. automodule:: constants
