@@ -39,6 +39,7 @@ jobs:
       - name: Build HTML
         run: |
           cd docs/
+          make clean
           sphinx-apidoc -o . ../ThoroughOracle-Scripts --ext-autodoc
           make html
       - name: Run ghp-import

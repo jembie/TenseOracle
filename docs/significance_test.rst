@@ -1,4 +1,4 @@
-Significane Test module
+Significance Test module
 =========================
 
 .. automodule:: significance_test
