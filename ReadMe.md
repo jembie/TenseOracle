@@ -31,10 +31,10 @@ To address this issue, we introduce a filtering mechanism that prevents the sele
 
 ## Usage Instructions
 
-After Cloning the project one can run a trial via the following command:\
+After Cloning the project one can run a trial via the following command:
 
 ```py
-python main.py --task_config Configs/Tasks/<task_config>.json --filter_strategy_name <filter_class_name>
+python main.py --task_config ./Configs/Tasks/<task_config>.json --filter_strategy_name <filter_class_name>
 ```
 
 > [!NOTE]
