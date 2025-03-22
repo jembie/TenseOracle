@@ -10,11 +10,10 @@ from constants import (
     COMET_WORKSPACE,
 )
 
-
 import concurrent.futures
 
-load_dotenv(find_dotenv())
-API = comet.API()
+# load_dotenv(find_dotenv())
+# API = comet.API()
 
 
 class DownloadCometData:
@@ -155,5 +154,7 @@ class DownloadCometData:
 
 
 if __name__ == "__main__":
+    load_dotenv(find_dotenv())
+    API = comet.API()
     experimental_data = DownloadCometData()
     experimental_data.get_data(filter_strategies_used=False)
