@@ -31,15 +31,32 @@ To address this issue, we introduce a filtering mechanism that prevents the sele
 
 ## Usage Instructions
 
-## Usage
 After Cloning the project one can run a trial via the following command:\
-`python main.py --task_config Configs/Tasks/<task_config>.json --filter_strategy_name <filter_class_name>`
 
-Note: Available Filters for `filter_class_name` can be found in the `Strategies` directory where the `__init__` file contains a listing of all available filters
-Note: if there is no GPU available one needs to set the `--gpu_optional` flag else it's going to exit immediately as a GPU is highly recommended for most datasets
+```py
+python main.py --task_config Configs/Tasks/<task_config>.json --filter_strategy_name <filter_class_name>
+```
 
-For Example:
-`python main.py --task_config Configs/Tasks/dbpedia.json --filter_strategy_name AutoFilter_Chen_Like --gpu_optional`
+_Note:_
 
-Most Hyperparameter that should be kept constant between runs (to keep them comparable),
-get specified in an extra config file that can be set via the `--experiment_config` argument by default it uses the `./Configs/standard.json` file
+- The available filtering strategies for `<filter_class_name>` can be found in the `Strategies` directory. The `Strategies/__init__.py` file contains a list of all available filters.
+
+- If no GPU is available, the `--gpu_optional` flag must be set. Otherwise, execution will terminate immediately, as GPU usage is highly recommended for most datasets.
+
+**Example Execution:**
+
+- with GPU available
+
+```py
+python main.py --task_config ./Configs/Tasks/dbpedia.json --filter_strategy_name AutoFilter_Chen_Like
+```
+
+- without GPU available
+
+```py
+python main.py --task_config ./Configs/Tasks/dbpedia.json --filter_strategy_name AutoFilter_Chen_Like --gpu_optional
+```
+
+**Experiment Configuration:**
+
+Most hyperparameters that should remain constant across multiple runs (to ensure comparability) are specified in a separate configuration file. By default, the system utilizes the `./Configs/standard.json` file. If one wants to choose another configuration file, then this can achieved through adding `--experiment_config <config>` in the execution.
