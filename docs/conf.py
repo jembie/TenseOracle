@@ -15,8 +15,7 @@ author = "Jimmy Pöhlmann"
 from pathlib import Path
 import sys
 
-sys.path.insert(0, Path("../ThoroughOracle-Scripts").resolve())
-
+sys.path.insert(0, str(Path("..", "ThoroughOracle-Scripts").resolve()))
 
 extensions = ["sphinx.ext.autodoc"]
 
