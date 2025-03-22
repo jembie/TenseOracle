@@ -5,13 +5,13 @@ This module contains all configuration constants and mappings used throughout th
 experiments. It defines experiment settings, filter strategy names, metrics, parameters, task names,
 and file paths essential for running experiments and processing results.
 
-Constants include:
-- Experiment configuration (workspace, flags, seed count)
-- Filter strategy definitions and mappings
-- Metrics configuration with expected types
-- Parameter definitions
-- Dataset task names and their configurations
-- File paths for accessing configuration files and data
+Constants includes:
+    Experiment configuration (workspace, flags, seed count)
+    Filter strategy definitions and mappings
+    Metrics configuration with expected types
+    Parameter definitions
+    Dataset task names and their configurations
+    File paths for accessing configuration files and data
 
 This centralized approach ensures consistency across the experimental framework and simplifies
 configuration management.
