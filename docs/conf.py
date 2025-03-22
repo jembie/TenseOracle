@@ -12,10 +12,10 @@ author = "Jimmy Pöhlmann"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-import os
+from pathlib import Path
 import sys
 
-sys.path.insert(0, os.path.abspath("../ThoroughOracle-Scripts/"))
+sys.path.insert(0, Path("../ThoroughOracle-Scripts").resolve())
 
 
 extensions = ["sphinx.ext.autodoc"]
