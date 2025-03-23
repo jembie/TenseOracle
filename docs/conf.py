@@ -29,13 +29,30 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
-html_logo = "_static/db_chair_logo.png"
+html_logo = "_images/db_chair_logo.svg"
 
 
 html_theme_options = {
     "logo": {
         "text": "Tense Oracle",
-        "image_light": "_images/db_chair_logo.png",
-        "image_dark": "_images/db_chair_logo.png",
-    }
+        "image_light": "_images/db_chair_logo.svg",
+        "image_dark": "_images/db_chair_logo.svg",
+    },
+    "icon_links": [
+        {
+            "name": "GitHub Project",
+            "url": "https://github.com/JP-SystemsX/TenseOracle",
+            "icon": "fa-brands fa-square-github",
+            "type": "fontawesome",
+        },
+        {
+            "name": "Research Chair",
+            "url": "https://tu-dresden.de/ing/informatik/sya/db/#intro",
+            "icon": "_static/db_chair_logo.svg",
+            "type": "local",
+        },
+    ],
+    "external_links": [
+        {"name": "TU Dresden Database Research Chair", "url": "https://tu-dresden.de/ing/informatik/sya/db/#intro"},
+    ],
 }
