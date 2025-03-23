@@ -14,9 +14,30 @@ The reason for that is, that the model assumes that it can gain the most informa
 However, this assumption does not hold for outliers, as these samples often remain 'unlearnable' and thus lead to an inefficient allocation of labeling resources.
 
 
+AL is a technique designed to reduce the cost of labeling large datasets for machine learning through selectively labeling only the most informative data samples.
+One of the most widely used methods within AL is pool-based uncertainty sampling, which follows an iterative loop:
+
+1. A small subset of labeled data and a large pool of unlabeled data are initialized.
+2. A model is trained on the labeled data and then the trained model is used to make predictions on the unlabeled pool.
+3. Samples for which the model has the highest uncertainty are chosen, based on the assumption that the model can learn the most from them.
+4. These chosen samples are then sent to an oracle (typically a human annotator) for labeling.
+5. Then newly labeled data is incorporated into the training set, and the model is retrained.
+6. This cycle repeats until the predefined labeling budget is exhausted.
+
+The premise of AL, is, that through this iterative process we achieve a more effective dataset compared to random sampling of labeled instances.
+
+.. image:: _static/al_loop-4.pdf
+   :align: center
+
+However, this methodology starts struggling when the model is confronted with datasets that contain a significant number (>= 5%) of outliers. Since models consistently perform poorly on outliers, they tend to be repeatedly chosen for labeling.Consequently, labeling these samples wastes resources and may even degrade model performance.
+
+To address this issue, we introduce a filtering mechanism that prevents the selection of such outliers for labeling. Our approach integrates a filter capable of vetoing specific samples, ensuring that AL resources are allocated more effectively.
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Project Analysis Code:
 
-   modules
    usage
+   modules
+
