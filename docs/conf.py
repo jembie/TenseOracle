@@ -34,8 +34,8 @@ html_logo = "_static/db_chair_logo.png"
 
 html_theme_options = {
     "logo": {
-        "text": "Tense Oracle Project Documentation",
-        "image_light": "_static/db_chair_logo.png",
-        "image_dark": "_static/db_chair_logo.png",
+        "text": "Tense Oracle",
+        "image_light": "_images/db_chair_logo.png",
+        "image_dark": "_images/db_chair_logo.png",
     }
 }

@@ -26,12 +26,15 @@ One of the most widely used methods within AL is pool-based uncertainty sampling
 
 The premise of AL, is, that through this iterative process we achieve a more effective dataset compared to random sampling of labeled instances.
 
-.. image:: _static/al_loop-4.pdf
+.. figure:: _images/al_loop.svg
    :align: center
 
 However, this methodology starts struggling when the model is confronted with datasets that contain a significant number (>= 5%) of outliers. Since models consistently perform poorly on outliers, they tend to be repeatedly chosen for labeling.Consequently, labeling these samples wastes resources and may even degrade model performance.
 
 To address this issue, we introduce a filtering mechanism that prevents the selection of such outliers for labeling. Our approach integrates a filter capable of vetoing specific samples, ensuring that AL resources are allocated more effectively.
+
+.. figure:: _images/al_loop_filtered.svg
+   :align: center
 
 
 .. toctree::
