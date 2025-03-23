@@ -1,4 +1,4 @@
-Usage
+Getting Started
 =====
 
 After Cloning the project one can run a trial via the following command:
