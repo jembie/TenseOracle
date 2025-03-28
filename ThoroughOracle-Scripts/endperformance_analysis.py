@@ -162,7 +162,6 @@ def baseline(random_sampling: str, prediction_entropy_uncertainty: str, predicti
 
     ranking_df = pd.DataFrame.from_dict(data=[results])
     ranking_df.index = ["Ranking"]
-    ranking_df = ranking_df.rank(axis=1, method="dense")
     for col in ranking_df.columns:
         print(f"Rank for {col}: {ranking_df.at['Ranking', col]}")
 
