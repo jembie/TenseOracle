@@ -8,7 +8,7 @@
 
 project = "TenseOracle"
 copyright = "2025, Jimmy Pöhlmann"
-author = "Jimmy Pöhlmann"
+author = "jembie"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
