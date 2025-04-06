@@ -5,8 +5,8 @@ This page is organized into four sections. We begin by outlining the experimenta
 Lastly, we offer a guide on for extending this framework on strategies and datasets which have not been convered by us.
 
 
-.. admonition:: Important: Read Me
-    :class: important
+.. admonition:: Caution
+    :class: caution
 
     We have conducted our experiments on Python version 3.10.4; newer versions of Python might run this framework without complications. However we cannot guarantee that it will due to dependencies between the external libraries.
     Additionally, it is **heavily** recommended to have a CUDA-compatible GPU available, else the computation would take even longer than it already does.
@@ -14,22 +14,32 @@ Lastly, we offer a guide on for extending this framework on strategies and datas
 
 General Setup
 -------------
+This section provides an overview of the essential preparations which are needed to execute the framework, as well as a description on how the codebase is structured.
 
-In this section we detail the preliminary steps needed for deploying our framework. We begin by detailing the setup configuration and then give examples on deployment.
+First, assure that you create a Comet account, for details on how to do that see: |comet_link|.
 
-Firstly, clone our repository from the following domain:
+The Comet account is needed as we have used this *(by the time of this writing)* free and open-source variant for logging and storing experimental measurements.
+
+.. |comet_link| raw:: html
+
+    <a href="https://www.comet.com/login" target="_blank">Comet Login</a>
+
+Cloning the Repository
+^^^^^^^^^^^^^^^^^^^^^^
+
+Next, clone our repository from the following domain:
 
 .. code-block:: bash
 
     git clone https://github.com/JP-SystemsX/TenseOracle.git
 
-After cloning you should find the **TenseOracle** folder. Change into that directory within your terminal and then execute the following command to list all existing branches:
+After cloning you should find the **TenseOracle** folder. Change into that directory within your terminal and then execute the following command inside the terminal to list all existing branches:
 
 .. code-block:: bash
 
     git branch -a
 
-If the clone was successful, then you should have the following output:
+If the cloning was successful, then you should have the following output:
 
 .. code-block:: bash
 
@@ -38,6 +48,9 @@ If the clone was successful, then you should have the following output:
     remotes/origin/Rainbow-Analysis
     remotes/origin/master
     remotes/origin/standard-analysis
+
+Setting up the Virtual Environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Assuming that the cloning was successful, we now need to setup a virtual environment and install the required external libraries. This can be done as follows:
 
@@ -48,7 +61,7 @@ Assuming that the cloning was successful, we now need to setup a virtual environ
     pip install -r requirements.txt
 
 .. note::
-    For deploying our framework we always assume that you are within the root directory of the project, which means one has the following folder structure:
+    For deploying our framework we always assume that you are within the root directory of the project, which means one should have the following folder structure within the terminal before deployment:
 
     .. code-block:: bash
 
@@ -61,6 +74,23 @@ Assuming that the cloning was successful, we now need to setup a virtual environ
         ├── docs/
         ...
         └── main.py
+
+
+Hyperparameter Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Most hyperparameters that should remain constant across multiple runs (to ensure comparability) are specified in a separate configuration file. 
+By default, the system utilizes the `Configs/standard.json` file. If one wants to choose another configuration file, then this can achieved through adding the ``--experiment_config`` argument when executing.
+
+
+.. |br| raw:: html
+
+   <br />
+
+.. admonition:: Important
+    :class: danger
+
+    Altering the `Configs/standard.json` file would result in alternation of the experimental results and thus any results cannot be compared with our findings.
 
 
 
@@ -85,13 +115,13 @@ Now, in order to execute the code one
         --comet_api_key COMET_KEY  \ # Replace COMET_KEY with your actual API Key
         --comet_workspace COMET_WORKSPACE # Replace COMET_WORKSPACE with the name of your comet workspace
 
-.. admonition:: Note
-    :class: note
+.. admonition:: Hint
+    :class: hint
 
-    The available filtering strategies for ``<filter_class_name>`` can be found in the ``Strategies`` directory.
-    The ``Strategies/__init__.py`` file contains a list of all available filters.
-    If no GPU is available, the ``--gpu_optional`` flag must be set. Otherwise, execution will terminate immediately,
-    because GPU usage is **highly recommended** for most datasets.
+    The available filtering strategies that work with the ``--filter_strategy_name`` argument can be found inside the ``Strategies/`` directory;
+    viewing the ``__init__.py`` file within that directory lists all available filters strategies.
+    If no GPU is available, the ``--gpu_optional`` flag **must be set**. If not set, then the execution will terminate immediately.
+    GPU usage is **highly recommended** for analysis.
 
 
 Endperformance Experiment
@@ -105,32 +135,8 @@ Endperformance Experiment
 
 
 
-Configurations
---------------
-
-Most hyperparameters that should remain constant across multiple runs (to ensure comparability) are specified in a separate configuration file. 
-By default, the system utilizes the `./Configs/standard.json` file. If one wants to choose another configuration file, then this can achieved through adding `--experiment_config <config>` in the execution.
-
-
-
 Example Execution
 -----------------
-
-.. note::
-    These examples assume that you are in the root directory of the project, which means one has the following folder structure:
-
-    .. code-block:: bash
-
-        .
-        ├── Configs/
-        ├── Datasets/
-        ├── Strategies/
-        ├── ThoroughOracle-Scripts/
-        ├── Utilities/
-        ├── docs/
-        ...
-        └── main.py
-
 
 - with GPU available
 
