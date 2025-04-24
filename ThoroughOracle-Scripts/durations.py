@@ -26,8 +26,17 @@ class DurationMeasure:
         "IsolationForestFilter": "IF",
     }
 
+    rename2 = {
+        "SimpleSS": "SSE",
+        "SemanticAE": "AE",
+        "SimpleDSM": "DSM",
+        "HDBScanFilter": "HDBSCAN",
+        "LocalOutlierFactorFilter": "LOF",
+        "IsolationForestFilter": "IF",
+    }
+
     def clean_asset_name(self, asset_name: str) -> str:
-        return self.rename["".join(asset_name.split("_")[2::])[:-4]]
+        return self.rename2["".join(asset_name.split("_")[0])]
 
     def collect_asset_paths(self, asset_paths: Optional[Path] = None) -> DefaultDict[str, List]:
         """
@@ -41,7 +50,7 @@ class DurationMeasure:
             A dictionary mapping task names to lists of asset paths.
         """
         if asset_paths is None:
-            asset_paths = Path(constants.BASE_PATH, "cache", "assets", "")
+            asset_paths = Path(constants.BASE_PATH, "cache", "assets", "final-experiment-all-filters")
 
         TASK_ASSET_MAP = defaultdict(list)
         for path in asset_paths.glob("**/*"):
@@ -65,7 +74,7 @@ class DurationMeasure:
         """
         results = {}
         for strategy, durations in asset_data.items():
-            results[strategy] = np.median(durations)
+            results[strategy] = np.median(np.concatenate(durations))
 
         return results
 
