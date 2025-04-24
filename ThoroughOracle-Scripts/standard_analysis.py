@@ -222,18 +222,42 @@ class StandardExperiment:
             ax: Matplotlib axis to plot on
             title: Title for the heatmap
         """
+        colors = sns.color_palette("YlGnBu", as_cmap=True)  # Stairwell-style color palette
+        data = data.drop(columns="HTL", errors="ignore")
+        rename = {
+            "Simple SS": "SSE",
+            "Semantic AE": "AE",
+            "Simple DSM": "DSM",
+            "HDBScan": "HDBSCAN",
+            "LocalOutlierFactor": "LOF",
+            "IsolationForest": "IF",
+        }
+        data = data.rename(columns=rename)
+
+        data.index = [index[1::] for index in data.index]
+        data = data[["DSM", "SSE", "LOF", "HDBSCAN", "IF", "AE"]]
+
         sns.heatmap(
-            data=data.drop(columns="HTL", errors="ignore"),
-            annot=True,
-            fmt=".2f",
-            annot_kws={"size": 8},  # Font size for annotations
-            linewidths=0.5,
-            linecolor="grey",  # Grey borders to define the stairwell look
+            data=data,
+            cmap=colors,  # Use stairwell style color map
+            annot=True,  # Annotate cells with values
+            fmt=".2f",  # Format annotations to 2 decimal places
+            annot_kws={"size": 20},  # Font size for annotations
+            linewidths=0.5,  # Thin borders for each cell
+            linecolor="black",  # Grey borders to define the stairwell look
             cbar_kws={"shrink": 0.5},  # Shrink color bar for fitting
-            square=True,
-            ax=ax,
+            square=True,  # Square cells for a structured look
         )
-        ax.set_title(title)
+
+        # Set x and y axis label font sizes
+        ax.set_xticklabels(ax.get_xticklabels(), fontsize=15, rotation=45, ha="center")
+        ax.set_yticklabels(ax.get_yticklabels(), fontsize=15)
+
+        # Adjust colorbar label size
+        cbar = ax.collections[0].colorbar
+        cbar.ax.tick_params(labelsize=12)
+
+        ax.set_title(title, fontsize=20)
 
     def save_visualization(self, filename: str, format: str = "pdf", dpi: int = 300):
         """
@@ -256,16 +280,14 @@ class StandardExperiment:
         """
         summarised_data = self.prepare_data()
 
-        data_filtered = self.create_comparison_df(summarised_data, self.filter_no_htl)
         data_unfiltered = self.create_comparison_df(summarised_data, self.filter_random)
 
         sns.set_theme()
-        fig, axes = plt.subplots(1, 2, figsize=(17, 11))
+        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 
-        self.create_heatmap(data_filtered, axes[0], "Filtered vs Unfiltered")
-        self.create_heatmap(data_unfiltered, axes[1], "Random(Filled Up) vs Unfiltered")
+        self.create_heatmap(data_unfiltered, ax, "Delta F1-Scores")
 
-        self.save_visualization("filtered_vs_unfiltered_vs_random2.pdf")
+        self.save_visualization("delta_f1_minimal_difference.pdf")
 
 
 if __name__ == "__main__":
