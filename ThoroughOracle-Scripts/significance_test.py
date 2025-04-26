@@ -92,9 +92,6 @@ def filter_random(asset_name: str) -> bool:
     return asset_name.endswith("_random")
 
 
-logging.basicConfig(filename="app.log", filemode="a", level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
-
-
 def clean_up_asset_name(asset_name: str) -> str:
     """
     Remove suffixes and map to cleaned names.
@@ -205,47 +202,63 @@ def random_vs_htl():
 def visualize_results():
     sns.set_theme()
     sns.xkcd_palette
-    fig, axes = plt.subplots(1, 2, figsize=(17, 11))
+    fig, axes = plt.subplots(1, 1, figsize=(10, 10))
 
-    no_htl = pd.read_csv(f"{constants.BASE_PATH}/img/minimal-difference/{constants.COMET_WORKSPACE}_no_htl_is_better.csv", index_col=0)
-    no_htl.index = [updated_index.split("_")[0] for updated_index in list(no_htl.index)]
-    random_better = pd.read_csv("./img/minimal-difference/outlier-detection_random_is_better.csv", index_col=0)
-    random_better.index = [updated_index.split("_")[0] for updated_index in list(random_better.index)]
-
-    sns.heatmap(
-        data=no_htl,
-        annot=True,
-        fmt=".2f",
-        annot_kws={"size": 8},
-        linewidths=0.5,
-        linecolor="grey",
-        cbar_kws={"shrink": 0.5},
-        square=True,
-        ax=axes[0],
+    random_better = pd.read_csv(
+        f"{constants.BASE_PATH}/img/minimal-difference{constants.COMET_WORKSPACE}_random_is_better.csv", index_col=0
     )
-    axes[0].set_title("Significance Test No HTL vs HTL")
+    random_better.index = [updated_index.split("_")[0][1::] for updated_index in list(random_better.index)]
+
+    rename_strategies = {
+        "Simple SS": "SSE",
+        "Semantic AE": "AE",
+        "Simple DSM": "DSM",
+        "HDBScan": "HDBSCAN",
+        "LocalOutlierFactor": "LOF",
+        "IsolationForest": "IF",
+    }
+    random_better = random_better.rename(columns=rename_strategies)
+    random_better = random_better[["DSM", "SSE", "LOF", "HDBSCAN", "IF", "AE"]]
+
+    annotations = random_better.copy().astype(str)
+    eps_min_threshold = 0.20
+    for index in random_better.index:
+        for col in random_better.columns:
+            value = random_better.at[index, col]
+            if value < eps_min_threshold:
+                annotations.loc[index, col] = f"$\\bf{{{value:.2f}}}$"
+            else:
+                annotations.loc[index, col] = round(value, 2)
+
+    colors = sns.color_palette("YlGnBu", as_cmap=True)  # Stairwell-style color palette
 
     sns.heatmap(
+        cmap=colors,
         data=random_better,
-        annot=True,
-        fmt=".2f",
-        annot_kws={"size": 8},
+        annot=annotations,
+        fmt="",
+        annot_kws={"size": 20},
         linewidths=0.5,
         linecolor="grey",
         cbar_kws={"shrink": 0.5},
         square=True,
-        ax=axes[1],
     )
-    axes[1].set_title("Significance Test Random(Filled Up) vs HTL")
-    plt.savefig(f"{constants.BASE_PATH}/img/minimal-difference/no_htl_vs_htl_vs_random.pdf", format="pdf", dpi=300)
+    axes.tick_params(axis="y", rotation=0)
+    axes.set_xticklabels(axes.get_xticklabels(), fontsize=15, rotation=45, ha="center")
+    axes.set_yticklabels(axes.get_yticklabels(), fontsize=15)
+    axes.set_title("Upper bound to the violation ratios ($\\epsilon_{min}$)", fontsize=18)
+
+    plt.savefig(f"{constants.BASE_PATH}/img/minimal-difference/sigtest_random_vs_htl.pdf", format="pdf", dpi=300)
 
 
 def main():
-    signifance_test(no_htl_vs_htl(), "no_htl_is_better")
-    logging.info("Done with no_htl_is_better")
+    logging.basicConfig(
+        filename=f"{constants.BASE_PATH}/app.log", filemode="a", level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     signifance_test(random_vs_htl(), "random_is_better")
     logging.info("Done with random_is_better")
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    visualize_results()
