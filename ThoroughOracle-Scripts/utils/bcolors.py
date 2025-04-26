@@ -48,6 +48,13 @@ class bcolors:
     def okblue(message):
         return bcolors.OKBLUE + message + bcolors.ENDC
 
+    # Method that returns a bold message
+    # usage:
+    #   print(bcolors.bold("What you did just type in Bold letters? WoW!"))
+    @staticmethod
+    def bold(message):
+        return bcolors.BOLD + message + bcolors.ENDC
+
     # Method that returns a header in some purple-ish color
     # usage:
     #   print(bcolors.header("This is great"))
