@@ -11,7 +11,6 @@ from constants import (
     COMET_WORKSPACE,
 )
 from utils.bcolors import bcolors
-import sys
 
 import concurrent.futures
 
@@ -75,12 +74,14 @@ class DownloadCometData:
         # If there was no strategy used, the default return is 'None', we then update it to be '' so naming of assets becomes (e.g.) durations.npy instead of None_durations.npy
         filter_strategy_name = "" if filter_strategy_name == "None" else filter_strategy_name
         if not filter_strategy_name and not endperformance_experiment:
-            print(
-                bcolors.fail(f"""ERROR! Attempted extracting filter_strategy_name returned '{filter_strategy_name}' from the current workspace ('{constants.COMET_WORKSPACE}') in {task}.
-                Perhaps you forgot to specify the correct 'COMET_WORKSPACE' or forgot to set {bcolors.bold("endperformance_experiment to True?")}
-                {bcolors.fail("Aborting...")}\n""")
+            error_message = bcolors.fail(
+                f"ERROR! Attempted extracting filter_strategy_name returned '{filter_strategy_name}' "
+                f"from the current workspace ('{constants.COMET_WORKSPACE}') in {task}.\n"
+                f"Perhaps you forgot to specify the correct 'COMET_WORKSPACE' or forgot to set "
+                f"{bcolors.bold('endperformance_experiment to True?')}\n"
+                f"{bcolors.fail('Aborting...')}\n"
             )
-            raise AttributeError
+            raise AttributeError(error_message)
 
         kwargs = {"task": task, "seed": seed, "filter_strategy_name": filter_strategy_name}
 
@@ -160,8 +161,8 @@ class DownloadCometData:
                     task_name = future_to_download_workspace_data[future]
                     try:
                         future.result()
-                    except Exception:
-                        return sys.exit(1)
+                    except AttributeError as error:
+                        raise error
                     else:
                         print(bcolors.ok(f"Download successfully completed for '{task_name}'"))
                     finally:
@@ -172,4 +173,4 @@ if __name__ == "__main__":
     load_dotenv(find_dotenv())
     API = comet.API()
     experimental_data = DownloadCometData()
-    experimental_data.get_data(endperformance_experiment=True)
+    experimental_data.get_data(endperformance_experiment=False)
