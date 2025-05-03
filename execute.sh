@@ -2,7 +2,7 @@
 
 JSON_PATH="./Configs/Tasks"
 comet_workspace="outlier-detection"
-comet_key="3U0bl47yUgc9TcJAiWKSpTI6u"
+comet_key=""
 
 # Ensure output directories exist
 mkdir -p ./slurm-runs/${comet_workspace}
