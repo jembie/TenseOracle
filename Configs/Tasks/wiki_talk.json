@@ -1,7 +1,7 @@
 {
   "dataset_path": "jigsaw_toxicity_pred",
   "task_class": "text_classification",
-  "task_name": "zWiki Talk",
+  "task_name": "xWiki Talk",
   "input_text_column": "comment_text",
   "label_column": "toxic",
   "test_set_name": "test",
