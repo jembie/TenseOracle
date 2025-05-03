@@ -152,8 +152,8 @@ class BreakingTies(ConfidenceBasedQueryStrategy):
         super().__init__(lower_is_better=True)
 
     def get_confidence(self, clf, dataset, _indices_unlabeled, _indices_labeled, _y):
-        proba = clf.predict_proba(dataset)
-        return np.apply_along_axis(lambda x: self._best_versus_second_best(x), 1, proba)
+        embeddings, proba = clf.embed(dataset, return_proba=True, embedding_method="cls") 
+        return np.apply_along_axis(lambda x: self._best_versus_second_best(x), 1, proba), proba, embeddings
 
     @staticmethod
     def _best_versus_second_best(proba):

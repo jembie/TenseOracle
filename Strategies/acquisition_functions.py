@@ -1,4 +1,4 @@
-from small_text.query_strategies.strategies import QueryStrategy, RandomSampling, PredictionEntropy
+from small_text.query_strategies.strategies import QueryStrategy, RandomSampling, PredictionEntropy, BreakingTies
 from scipy.stats import entropy
 from abc import ABC, abstractmethod
 import numpy as np
