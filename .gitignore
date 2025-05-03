@@ -1,3 +1,5 @@
 .idea/
 cache/
 *.pyc
+venv/
+.venv/
