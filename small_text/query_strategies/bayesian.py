@@ -34,11 +34,14 @@ class BALD(QueryStrategy):
         proba_dopout_sampled = clf.predict_proba(dataset, dropout_sampling=self.dropout_samples)
         bald_scores = _bald(proba_dopout_sampled)
 
+        embeddings, proba = clf.embed(dataset, return_proba=True, embedding_method="cls") 
+
         if len(indices_unlabeled) == n:
             return np.array(indices_unlabeled)
 
         indices_partitioned = np.argpartition(-bald_scores[indices_unlabeled], n)[:n]
-        return np.array([indices_unlabeled[i] for i in indices_partitioned])
+        # Indices Chosen, Confidence, Proba, Embeddings
+        return np.array([indices_unlabeled[i] for i in indices_partitioned]), 0, proba, embeddings
 
     def __str__(self):
         return f'BALD(dropout_samples={self.dropout_samples})'
