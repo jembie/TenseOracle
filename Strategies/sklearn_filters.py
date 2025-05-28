@@ -6,6 +6,8 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.cluster import HDBSCAN
 
+from umap.umap_ import UMAP
+
 from small_text.classifiers.classification import Classifier
 from small_text.data.datasets import Dataset
 from Strategies.filters import FilterStrategy
@@ -110,7 +112,11 @@ class HDBScanFilter(FilterStrategy):
         iteration=0,
     ) -> ndarray:
         hdb = HDBSCAN(metric="cosine")
-        hdb.fit(embeddings)
+
+        reducer = UMAP(random_state=self.seed, metric="cosine", n_components=16)
+        scaled_embeddings = reducer.fit_transform(embeddings)
+
+        hdb.fit(scaled_embeddings)
         labels = hdb.labels_ == -1
         print(f"Total Outliers detected for: HDBScan {sum(labels) / len(labels)}")
 

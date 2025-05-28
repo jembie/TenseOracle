@@ -27,4 +27,4 @@ SyntacticAE = AutoFilter_LSTM_SIMPLE  # DO NOT USE FOR EVALUATION
 
 SemanticAE = AutoFilter_Chen_Like
 
-SimpleSS = SingleStepEntropy_SimplePseudo
+SimpleSS = SingleStepEntropy_SimplePseudo  # SSE
