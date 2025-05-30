@@ -1,0 +1,621 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Getting Started &#8212; TenseOracle  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=3c16df68" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'usage';</script>
+    <link rel="icon" href="_static/db_chair_logo.svg"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ThoroughOracle-Scripts" href="modules.html" />
+    <link rel="prev" title="TenseOracle Documentation" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/db_chair_logo.svg" class="logo__image only-light" alt=""/>
+    <img src="_static/db_chair_logo.svg" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">Tense Oracle</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="modules.html">
+    ThoroughOracle-Scripts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://tu-dresden.de/ing/informatik/sya/db/#intro">
+    TU Dresden Database Research Chair
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/JP-SystemsX/TenseOracle" title="GitHub Project" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub Project</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://tu-dresden.de/ing/informatik/sya/db/#intro" title="Research Chair" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/db_chair_logo.svg" class="icon-link-image" alt="Research Chair"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="modules.html">
+    ThoroughOracle-Scripts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://tu-dresden.de/ing/informatik/sya/db/#intro">
+    TU Dresden Database Research Chair
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/JP-SystemsX/TenseOracle" title="GitHub Project" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub Project</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://tu-dresden.de/ing/informatik/sya/db/#intro" title="Research Chair" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/db_chair_logo.svg" class="icon-link-image" alt="Research Chair"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Getting Started</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
+<p>This page is organized into four sections. We begin by outlining the experimental setup and deployment prerequisites. Next, we present the <strong>Minimal Differences</strong> and <strong>Endperformance</strong> experiments, including interpretations of the results.
+Lastly, we offer a guide on for extending this framework on strategies and datasets which have not been convered by us.</p>
+<div class="caution admonition">
+<p class="admonition-title">Caution</p>
+<p>We have conducted our experiments on Python version 3.10.4; newer versions of Python might run this framework without complications. However we cannot guarantee that it will due to dependencies between the external libraries.
+Additionally, it is <strong>heavily</strong> recommended to have a CUDA-compatible GPU available, else the computation would take even longer than it already does.</p>
+</div>
+<section id="general-setup">
+<h2>General Setup<a class="headerlink" href="#general-setup" title="Link to this heading">#</a></h2>
+<p>This section provides an overview of the essential preparations which are needed to execute the framework, as well as a description on how the codebase is structured.</p>
+<p>First, assure that you create a Comet account, for details on how to do that see: <a href="https://www.comet.com/login" target="_blank">Comet Login</a>.</p>
+<p>The Comet account is needed as we have used this <em>(by the time of this writing)</em> free and open-source variant for logging and storing experimental measurements.</p>
+<section id="cloning-the-repository">
+<h3>Cloning the Repository<a class="headerlink" href="#cloning-the-repository" title="Link to this heading">#</a></h3>
+<p>Next, clone our repository from the following domain:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/JP-SystemsX/TenseOracle.git
+</pre></div>
+</div>
+<p>After cloning you should find the <strong>TenseOracle</strong> folder. Change into that directory within your terminal and then execute the following command inside the terminal to list all existing branches:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>branch<span class="w"> </span>-a
+</pre></div>
+</div>
+<p>If the cloning was successful, then you should have the following output:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>*<span class="w"> </span>master
+remotes/origin/HEAD<span class="w"> </span>-&gt;<span class="w"> </span>origin/master
+remotes/origin/Rainbow-Analysis
+remotes/origin/master
+remotes/origin/standard-analysis
+</pre></div>
+</div>
+</section>
+<section id="setting-up-the-virtual-environment">
+<h3>Setting up the Virtual Environment<a class="headerlink" href="#setting-up-the-virtual-environment" title="Link to this heading">#</a></h3>
+<p>Assuming that the cloning was successful, we now need to setup a virtual environment and install the required external libraries. This can be done as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For deploying our framework we always assume that you are within the root directory of the project, which means one should have the following folder structure within the terminal before deployment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.
+├──<span class="w"> </span>Configs/
+├──<span class="w"> </span>Datasets/
+├──<span class="w"> </span>Strategies/
+├──<span class="w"> </span>ThoroughOracle-Scripts/
+├──<span class="w"> </span>Utilities/
+├──<span class="w"> </span>docs/
+...
+└──<span class="w"> </span>main.py
+</pre></div>
+</div>
+</div>
+</section>
+<section id="hyperparameter-configuration">
+<h3>Hyperparameter Configuration<a class="headerlink" href="#hyperparameter-configuration" title="Link to this heading">#</a></h3>
+<p>Most hyperparameters that should remain constant across multiple runs (to ensure comparability) are specified in a separate configuration file.
+By default, the system utilizes the <cite>Configs/standard.json</cite> file. If one wants to choose another configuration file, then this can achieved through adding the <code class="docutils literal notranslate"><span class="pre">--experiment_config</span></code> argument when executing.</p>
+<div class="danger admonition">
+<p class="admonition-title">Important</p>
+<p>Altering the <cite>Configs/standard.json</cite> file would result in alternation of the experimental results and thus any results cannot be compared with our findings.</p>
+</div>
+</section>
+</section>
+<section id="minimal-difference-experiment">
+<h2>Minimal Difference Experiment<a class="headerlink" href="#minimal-difference-experiment" title="Link to this heading">#</a></h2>
+<p>In this section we assume that you reside within the <strong>master</strong>’s branch, as the other branch has slight modifications and thus cannot used for the analysis of this experiment.</p>
+<p>&lt;Short explanation of what the experiment does&gt;</p>
+<p>Now, in order to execute the code one</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>python<span class="w"> </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="linenos">2</span><span class="w">    </span>--task_config<span class="w"> </span>./Configs/Tasks/rotten_tomatoes.json<span class="w"> </span><span class="se">\</span>
+<span class="linenos">3</span><span class="w">    </span>--experiment_config<span class="w"> </span>./Configs/standard.json<span class="w"> </span><span class="se">\</span>
+<span class="linenos">4</span><span class="w">    </span>--filter_strategy_name<span class="w"> </span>LocalOutlierFactorFilter<span class="w"> </span>HDBScanFilter<span class="w"> </span>IsolationForestFilter<span class="w"> </span>SimpleSS<span class="w"> </span>SimpleDSM<span class="w"> </span>SemanticAE<span class="w"> </span><span class="se">\</span>
+<span class="hll"><span class="linenos">5</span><span class="w">    </span>--comet_api_key<span class="w"> </span>COMET_KEY<span class="w">  </span><span class="se">\ </span><span class="c1"># Replace COMET_KEY with your actual API Key</span>
+</span><span class="linenos">6</span><span class="w">    </span>--comet_workspace<span class="w"> </span>COMET_WORKSPACE<span class="w"> </span><span class="c1"># Replace COMET_WORKSPACE with the name of your comet workspace</span>
+</pre></div>
+</div>
+<div class="hint admonition">
+<p class="admonition-title">Hint</p>
+<p>The available filtering strategies that work with the <code class="docutils literal notranslate"><span class="pre">--filter_strategy_name</span></code> argument can be found inside the <code class="docutils literal notranslate"><span class="pre">Strategies/</span></code> directory;
+viewing the <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> file within that directory lists all available filters strategies.
+If no GPU is available, the <code class="docutils literal notranslate"><span class="pre">--gpu_optional</span></code> flag <strong>must be set</strong>. If not set, then the execution will terminate immediately.
+GPU usage is <strong>highly recommended</strong> for analysis.</p>
+</div>
+</section>
+<section id="endperformance-experiment">
+<h2>Endperformance Experiment<a class="headerlink" href="#endperformance-experiment" title="Link to this heading">#</a></h2>
+<p>…</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span>--task_config<span class="w"> </span>./Configs/Tasks/&lt;task_config&gt;.json<span class="w"> </span>--filter_strategy_name<span class="w"> </span>&lt;filter_class_name&gt;
+</pre></div>
+</div>
+</section>
+<section id="example-execution">
+<h2>Example Execution<a class="headerlink" href="#example-execution" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>with GPU available</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span>--task_config<span class="w"> </span>./Configs/Tasks/dbpedia.json<span class="w"> </span>--filter_strategy_name<span class="w"> </span>AutoFilter_Chen_Like
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>without GPU available</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">TenseOracle Documentation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="modules.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">ThoroughOracle-Scripts</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#general-setup">General Setup</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cloning-the-repository">Cloning the Repository</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-the-virtual-environment">Setting up the Virtual Environment</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hyperparameter-configuration">Hyperparameter Configuration</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-difference-experiment">Minimal Difference Experiment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#endperformance-experiment">Endperformance Experiment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-execution">Example Execution</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025, Jimmy Pöhlmann.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

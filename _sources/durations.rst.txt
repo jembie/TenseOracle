@@ -1,0 +1,7 @@
+durations module
+================
+
+.. automodule:: durations
+   :members:
+   :undoc-members:
+   :show-inheritance:
