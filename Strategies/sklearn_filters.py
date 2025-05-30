@@ -111,13 +111,12 @@ class HDBScanFilter(FilterStrategy):
         n=10,
         iteration=0,
     ) -> ndarray:
-        hdb = HDBSCAN(metric="cosine")
+        hdb = HDBSCAN(min_cluster_size=100, metric="cosine")
 
-        reducer = UMAP(random_state=self.seed, metric="cosine", n_components=16)
+        reducer = UMAP(random_state=self.seed, metric="cosine", n_components=5)
         scaled_embeddings = reducer.fit_transform(embeddings)
 
         hdb.fit(scaled_embeddings)
         labels = hdb.labels_ == -1
-        print(f"Total Outliers detected for: HDBScan {sum(labels) / len(labels)}")
 
         return labels[indices_chosen]
